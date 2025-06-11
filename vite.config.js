@@ -16,4 +16,19 @@ export default defineConfig({
       // '@context': path.resolve(__dirname, 'src/context'),
     },
   },
+  server: {
+    proxy: {
+      '^/users/.*': {
+        target: 'http://92.205.61.102',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE,PATCH,OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+        }
+      }
+    }
+  }
 })

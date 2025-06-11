@@ -25,11 +25,13 @@ import {
 } from "@/components/ui/sidebar"
 import bniLogo from "@/assets/bni-2020-seeklogo.png"
 
+const user = localStorage.getItem('user');
+
 // This is sample data.
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
+    name: user,
+    //email: "m@example.com",
     avatar: "/avatars/shadcn.jpg",
   },
   teams: [
@@ -51,40 +53,51 @@ const data = {
   ],
   navMain: [
     {
-      title: "Playground",
-      url: "/",
+      title: "Kullanıcılar",
+      url: "#",
       icon: SquareTerminal,
+      isActive: true,
+      items: [
+        {
+          title: "Yeni Kullanıcı",
+          url: "/create-user",
+        },
+        {
+          title: "Kullanıcılar",
+          url: "/test-page-2",
+        },
+      ]
     },
-    {
-      title: "Models",
-      url: "/test-page-2",
-      icon: Bot,
-    },
-    {
-      title: "Documentation",
-      url: "#",
-      icon: BookOpen,
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings2,
-    },
+    // {
+    //   title: "Models",
+    //   url: "/test-page-2",
+    //   icon: Bot,
+    // },
+    // {
+    //   title: "Documentation",
+    //   url: "#",
+    //   icon: BookOpen,
+    // },
+    // {
+    //   title: "Settings",
+    //   url: "#",
+    //   icon: Settings2,
+    // },
   ],
   projects: [
     {
       name: "Design Engineering",
-      url: "#",
+      url: "/",
       icon: Frame,
     },
     {
       name: "Sales & Marketing",
-      url: "#",
+      url: "/test-page-2",
       icon: PieChart,
     },
     {
       name: "Travel",
-      url: "#",
+      url: "/test-page-3",
       icon: Map,
     },
   ],

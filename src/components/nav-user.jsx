@@ -29,11 +29,20 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useNavigate } from "react-router-dom"
+import { authService } from "../services/auth.service"
 
 export function NavUser({
   user
 }) {
   const { isMobile } = useSidebar()
+
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    authService.logout();
+    navigate('/login');
+  };
 
   return (
     <SidebarMenu>
@@ -71,32 +80,20 @@ export function NavUser({
                 </div>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Sparkles />
-                Upgrade to Pro
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <BadgeCheck />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
+                Hesap
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Bell />
-                Notifications
+                Bildirimler
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOut />
-              Log out
+            <DropdownMenuItem onClick={handleLogout}>
+              <LogOut color="red" />
+              <span className="text-red-500">Çıkış yap</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

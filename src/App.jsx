@@ -5,6 +5,7 @@ import TestPage1 from "./pages/TestPage1";
 import TestPage2 from "./pages/TestPage2";
 import DashboardNavbar from "./layout/dashboarNavbar";
 import ProtectedRoutes from "./ProtectedRoutes";
+import CreateUser from "./pages/CreateUser";
 
 function App() {
   const router = createBrowserRouter([
@@ -15,9 +16,13 @@ function App() {
           path: "/",
           element: <DashboardNavbar />,
           children: [
+            // {
+            //   index: true,
+            //   element: <TestPage1 />,
+            // },
             {
-              index: true,
-              element: <TestPage1 />,
+              path: "create-user",
+              element: <CreateUser />,
             },
             {
               path: "test-page-2",

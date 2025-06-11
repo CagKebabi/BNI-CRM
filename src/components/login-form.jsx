@@ -5,15 +5,50 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { authService } from "../services/auth.service";
+import { toast } from "sonner";
 
 export function LoginForm({ className, ...props }) {
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: ""
+  });
 
   const handleInputChange = (e) => {
-
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const response = await authService.login(formData.email, formData.password);
+      console.log("Login response:", response);
+
+      if (response.access && response.refresh) {
+        localStorage.setItem('access', response.access);
+        localStorage.setItem('refresh', response.refresh);
+        toast("Başarıyla giriş yapıldı");
+        navigate("/");
+      } else {
+        throw new Error("Giriş yapılamadı", error);
+      }
+
+    } catch (error) {
+      localStorage.removeItem('access');
+      localStorage.removeItem('refresh');
+      console.error('Login error:', error);
+      toast(error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -36,10 +71,9 @@ export function LoginForm({ className, ...props }) {
                   type="email"
                   placeholder="m@example.com"
                   required
-                  value=""
+                  value={formData.email}
                   onChange={handleInputChange}
-                  // disabled={isLoading}
-                  // autoComplete="email"
+                  disabled={isLoading}
                   autoComplete="off"
                 />
               </div>
@@ -52,27 +86,15 @@ export function LoginForm({ className, ...props }) {
                   name="password"
                   type="password"
                   required
-                  value=""
+                  value={formData.password}
                   onChange={handleInputChange}
-                  //disabled={isLoading}
-                  // autoComplete="current-password"
+                  disabled={isLoading}
                   autoComplete="off"
                 />
               </div>
-              <Button 
-              type="submit" 
-              className="w-full" 
-              //disabled={isLoading}
-              >
-                {/*{isLoading ? "Giriş yapılıyor..." : "Giriş Yap"}*/}
-                Giriş Yap
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Giriş yapılıyor..." : "Giriş Yap"}
               </Button>
-              {/* <div className="text-center text-sm">
-                Bir hesabınız yok mu?{" "}
-                <Link to="/register" className="underline underline-offset-4">
-                  Kayıt Ol
-                </Link>
-              </div> */}
             </div>
           </form>
         </CardContent>
