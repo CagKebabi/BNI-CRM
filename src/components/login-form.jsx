@@ -35,7 +35,7 @@ export function LoginForm({ className, ...props }) {
       if (response.access && response.refresh) {
         localStorage.setItem('access', response.access);
         localStorage.setItem('refresh', response.refresh);
-        toast("Başarıyla giriş yapıldı");
+        toast.success("Başarıyla giriş yapıldı");
         navigate("/");
       } else {
         throw new Error("Giriş yapılamadı", error);
@@ -45,7 +45,7 @@ export function LoginForm({ className, ...props }) {
       localStorage.removeItem('access');
       localStorage.removeItem('refresh');
       console.error('Login error:', error);
-      toast(error.message);
+      toast.error(error.message);
     } finally {
       setIsLoading(false);
     }
