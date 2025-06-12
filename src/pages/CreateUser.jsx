@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { usersService } from '../services/users.service'
 
 // Form doğrulama şeması
 const formSchema = z.object({
@@ -31,9 +32,13 @@ const formSchema = z.object({
     password: z.string().min(8, {
         message: "Şifre en az 8 karakter olmalıdır.",
     }),
-    role: z.enum(["admin", "doctor"], {
-        errorMap: (issue, ctx) => ({ message: 'Lütfen geçerli bir rol seçiniz' })
+    password2: z.string().min(8, {
+        message: "Şifre tekrarı en az 8 karakter olmalıdır.",
     }),
+    first_name: z.string().optional(),
+    last_name: z.string().optional(),
+    gsm: z.string().optional(),
+    group_id: z.string().optional(),
 });
 
 export default function CreateUser() {
@@ -59,10 +64,14 @@ export default function CreateUser() {
         setIsLoading(true);
         try {
         console.log('Form değerleri:', values);
-        const response = await userService.createNewUser(
+        const response = await usersService.createNewUser(
             values.email,
             values.password,
-            values.role
+            values.password2,
+            values.first_name,
+            values.last_name,
+            values.gsm,
+            values.group_id
         );
         console.log('Kullanıcı oluşturuldu:', response);
         navigate("/user-list");
@@ -165,7 +174,7 @@ export default function CreateUser() {
                         />
                         <FormField
                             control={form.control}
-                            name="group"
+                            name="group_id"
                             render={({ field }) => (
                                 <FormItem>
                                 <FormLabel>Grup</FormLabel>

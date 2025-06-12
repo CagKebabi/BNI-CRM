@@ -68,6 +68,22 @@ const data = {
         },
       ]
     },
+    {
+      title: "Organizasyon",
+      url: "#",
+      icon: SquareTerminal,
+      isActive: true,
+      items: [
+        {
+          title: "Ülkeler",
+          url: "/country-list",
+        },
+        {
+          title: "Yeni Ülke",
+          url: "/create-country",
+        },
+      ]
+    },
     // {
     //   title: "Models",
     //   url: "/test-page-2",

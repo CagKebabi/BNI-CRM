@@ -32,9 +32,7 @@ import {
 import { useNavigate } from "react-router-dom"
 import { authService } from "../services/auth.service"
 
-export function NavUser({
-  user
-}) {
+  export function NavUser({user}) {
   const { isMobile } = useSidebar()
 
   const navigate = useNavigate();

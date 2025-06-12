@@ -6,6 +6,8 @@ import TestPage2 from "./pages/TestPage2";
 import DashboardNavbar from "./layout/dashboarNavbar";
 import ProtectedRoutes from "./ProtectedRoutes";
 import CreateUser from "./pages/CreateUser";
+import Countries from "./pages/Countries";
+import CreateCountry from "./pages/CreateCountry";
 
 function App() {
   const router = createBrowserRouter([
@@ -27,6 +29,14 @@ function App() {
             {
               path: "test-page-2",
               element: <TestPage2 />,
+            },
+            {
+              path: "country-list",
+              element: <Countries />,
+            },
+            {
+              path: "create-country",
+              element: <CreateCountry />,
             },
           ],
         }
