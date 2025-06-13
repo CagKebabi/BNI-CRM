@@ -10,6 +10,11 @@ export const ENDPOINTS = {
   CREATE_USER: '/users/users/',
   // Organization endpoints
   COUNTRIES: '/organization/countries/',
+  UPDATE_COUNTRY: (id) => `/organization/countries/${id}/`,
+  DELETE_COUNTRY: (id) => `/organization/countries/${id}/`,
+  // Regions endpoints
+  REGIONS: '/organization/regions/',
+  CREATE_REGION: '/organization/regions/',
 };
 
 // API istekleri için varsayılan ayarlar

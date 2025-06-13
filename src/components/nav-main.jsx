@@ -32,7 +32,7 @@ export function NavMain({
               <CollapsibleTrigger asChild>
                 <SidebarMenuButton tooltip={item.title}>
                   {item.icon && <item.icon />}
-                  <span>{item.title}</span>
+                  <span className="text-lg font-semibold">{item.title}</span>
                   <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                 </SidebarMenuButton>
               </CollapsibleTrigger>
@@ -40,14 +40,14 @@ export function NavMain({
                 <SidebarMenuSub>
                   {item.items.map((subItem) => (
                     <SidebarMenuSubItem key={subItem.title}>
-                      <SidebarMenuSubButton tooltip={subItem.title} >
-                      <Link to={subItem.url} className="cursor-pointer">
-                        <SidebarMenuButton tooltip={subItem.title}>
+                      {/* <SidebarMenuSubButton tooltip={subItem.title} > */}
+                      <Link to={subItem.url} className="cursor-pointer hover:bg-sidebar-accent hover:text-sidebar-accent-foreground block text-lg rounded-2xl pl-2">
+                        {/* <SidebarMenuButton tooltip={subItem.title}> */}
                           {subItem.icon && <subItem.icon />}
                           <span>{subItem.title}</span>
-                        </SidebarMenuButton>
+                        {/* </SidebarMenuButton> */}
                       </Link>
-                      </SidebarMenuSubButton>
+                      {/* </SidebarMenuSubButton> */}
                     </SidebarMenuSubItem>
                   ))}
                 </SidebarMenuSub>

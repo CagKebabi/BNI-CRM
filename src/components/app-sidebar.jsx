@@ -82,6 +82,10 @@ const data = {
           title: "Yeni Ülke",
           url: "/create-country",
         },
+        {
+          title: "Bölgeler",
+          url: "/region-list",
+        },
       ]
     },
     // {
@@ -129,7 +133,7 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        {/* <NavProjects projects={data.projects} /> */}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />

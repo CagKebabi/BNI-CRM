@@ -8,6 +8,7 @@ import ProtectedRoutes from "./ProtectedRoutes";
 import CreateUser from "./pages/CreateUser";
 import Countries from "./pages/Countries";
 import CreateCountry from "./pages/CreateCountry";
+import Regions from "./pages/Regions";
 
 function App() {
   const router = createBrowserRouter([
@@ -37,6 +38,10 @@ function App() {
             {
               path: "create-country",
               element: <CreateCountry />,
+            },
+            {
+              path: "region-list",
+              element: <Regions />,
             },
           ],
         }
