@@ -2,11 +2,9 @@
 const routeMap = {
   '/': { title: 'Ana Sayfa', parent: null },
   '/create-user': { title: 'Yeni Kullanıcı', parent: '/' },
-  '/test-page-1': { title: 'Test Sayfası 1', parent: '/' },
-  '/test-page-2': { title: 'Test Sayfası 2', parent: '/' },
   '/country-list': { title: 'Ülkeler', parent: '/' },
-  '/create-country': { title: 'Yeni Ülke', parent: '/' },
   '/region-list': { title: 'Bölge Listesi', parent: '/' },
+  '/group-list': { title: 'Grup Listesi', parent: '/' },
 };
 
 export function generateBreadcrumbs(pathname) {

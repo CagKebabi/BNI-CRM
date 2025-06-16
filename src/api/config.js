@@ -15,6 +15,13 @@ export const ENDPOINTS = {
   // Regions endpoints
   REGIONS: '/organization/regions/',
   CREATE_REGION: '/organization/regions/',
+  UPDATE_REGION: (id) => `/organization/regions/${id}/`,
+  DELETE_REGION: (id) => `/organization/regions/${id}/`,
+  // Groups endpoints
+  GROUPS: '/organization/groups/',
+  CREATE_GROUP: '/organization/groups/',
+  UPDATE_GROUP: (id) => `/organization/groups/${id}/`,
+  DELETE_GROUP: (id) => `/organization/groups/${id}/`,
 };
 
 // API istekleri için varsayılan ayarlar

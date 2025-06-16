@@ -79,12 +79,12 @@ const data = {
           url: "/country-list",
         },
         {
-          title: "Yeni Ülke",
-          url: "/create-country",
-        },
-        {
           title: "Bölgeler",
           url: "/region-list",
+        },
+        {
+          title: "Gruplar",
+          url: "/group-list",
         },
       ]
     },

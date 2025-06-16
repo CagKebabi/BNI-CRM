@@ -4,14 +4,14 @@ import { apiService } from "./api.service";
 class CountriesService {
     async getCountries() {
         try {
-            const token = localStorage.getItem('access');
+            // const token = localStorage.getItem('access');
 
-            console.log("Token:", token);
+            // console.log("Token:", token);
       
-            const headers = {
-                'Authorization': `Bearer ${token}`
-            };
-            const response = await apiService.get(ENDPOINTS.COUNTRIES, headers);
+            // const headers = {
+            //     'Authorization': `Bearer ${token}`
+            // };
+            const response = await apiService.get(ENDPOINTS.COUNTRIES);
             console.log("Ülke listesi alındı:", response);
             return response;
         } catch (error) {

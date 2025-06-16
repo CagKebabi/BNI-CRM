@@ -21,14 +21,12 @@ import {
 } from '../components/ui/dialog';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
-import { Label } from '../components/ui/label';
 import { Input } from '../components/ui/input';
 import { Plus } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import {
     Form,
     FormControl,
-    FormDescription,
     FormField,
     FormItem,
     FormLabel,
@@ -39,48 +37,9 @@ const Regions = () => {
     const [regions, setRegions] = useState([]);
     const [countries, setCountries] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isEditFormLoading, setIsEditFormLoading] = useState(false);
     const [addRegionDialogOpen, setAddRegionDialogOpen] = useState(false);
+    const [updateRegionDialogOpen, setUpdateRegionDialogOpen] = useState(false);
     const [currentRegion, setCurrentRegion] = useState(null);
-    const [editCountryName, setEditCountryName] = useState('');  
-    
-    // const handleEditCountry = (country) => {
-    //     console.log('Edit country with ID:', country.id);
-    //     setCurrentCountry(country);
-    //     setEditCountryName(country.name);
-    //     setEditDialogOpen(true);
-    // };
-    
-    // const handleSaveEdit = async () => {
-    //     setIsEditFormLoading(true);
-    //     try {
-    //         if (!currentCountry || !editCountryName.trim()) return;
-            
-    //         await countriesService.updateCountry(currentCountry.id, { name: editCountryName });
-    //         toast.success('Ülke başarıyla güncellendi');
-    //         setIsEditFormLoading(false);
-    //         setEditDialogOpen(false);
-    //         fetchCountries(); // Refresh the list
-    //     } catch (error) {
-    //         console.error('Error updating country:', error);
-    //         toast.error('Ülke güncelleme hatası');
-    //     } finally {
-    //         setIsEditFormLoading(false);
-    //     }
-    // };
-    
-    // const handleDeleteCountry = async(countryId) => {
-    //     console.log('Delete country with ID:', countryId);
-    //     // Implement delete functionality here
-    //     try {
-    //         await countriesService.deleteCountry(countryId);
-    //         fetchCountries();
-    //         toast.success('Ülke başarıyla silindi');
-    //     } catch (error) {
-    //         console.error('Error deleting country:', error);
-    //         toast.error('Ülke silme hatası');
-    //     }
-    // };
 
     const fetchRegions = async () => {
         try {
@@ -101,7 +60,7 @@ const Regions = () => {
                 countriesData = [response];
             }
             
-            console.log('Processed countries data:', countriesData);
+            console.log('Ülke listesi alındı:', countriesData);
             setRegions(countriesData);
             setIsLoading(false);
         } catch (error) {
@@ -166,6 +125,14 @@ const Regions = () => {
         },
     });
 
+    const updateRegionForm = useForm({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            name: "",
+            country: "",
+        },
+    });
+
     // Add Region
     const onSubmit = async (data) => {
         setIsLoading(true);
@@ -183,7 +150,66 @@ const Regions = () => {
         } finally {
             setIsLoading(false);
             setAddRegionDialogOpen(false);
-            form.reset();
+            form.reset({
+                name: "",
+                country: ""
+            });
+        }
+    };
+
+    // Update Region
+    const handleUpdateClick = (region) => {
+        setCurrentRegion(region);
+        // Form değerlerini güncelle
+        const selectedCountry = countries.find(country => country.id === region.country);
+        console.log('Selected country:', selectedCountry);
+        
+        updateRegionForm.reset({
+            name: region.name,
+            country: region.country // Ülkenin ID'sini kullan
+        });
+        setUpdateRegionDialogOpen(true);
+    };
+
+    const handleUpdateRegion = async (data) => {
+        if (!currentRegion) return;
+        
+        setIsLoading(true);
+        try {
+            const response = await regionsService.updateRegion(currentRegion.id, {
+                name: data.name,
+                country: data.country
+            });
+            console.log('Bölge güncellendi:', response);
+            fetchRegions();
+            toast.success('Bölge başarıyla güncellendi');
+        } catch (error) {
+            console.error("Bölge güncelleme hatası:", error);
+            toast.error('Bölge güncelleme hatası');
+        } finally {
+            setIsLoading(false);
+            setUpdateRegionDialogOpen(false);
+            setCurrentRegion(null);
+            updateRegionForm.reset({
+                name: "",
+                country: ""
+            });
+        }
+    };
+
+    // Delete Region
+    const handleDeleteRegion = async (id) => {
+        setIsLoading(true);
+        try {
+            await regionsService.deleteRegion(id);
+            toast.success('Bölge başarıyla silindi');
+            setIsLoading(false);
+            fetchRegions(); // Refresh the list
+        } catch (error) {
+            console.error('Error deleting region:', error);
+            toast.error('Bölge silme hatası');
+        } finally {
+            setIsLoading(false);
         }
     };
     
@@ -191,10 +217,10 @@ const Regions = () => {
         <>
             <div className="max-w-4xl p-6">
                 <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold mb-6">Bölgeler</h1>
-                <Button variant="default" size="icon" onClick={() => setAddRegionDialogOpen(true)}>
-                    <Plus className="h-5 w-5" />
-                </Button>
+                    <h1 className="text-2xl font-bold mb-6">Bölgeler</h1>
+                    <Button variant="default" size="icon" onClick={() => setAddRegionDialogOpen(true)}>
+                        <Plus className="h-5 w-5" />
+                    </Button>
                 </div>
                 {isLoading ? (
                     <p>Yükleniyor...</p>
@@ -212,11 +238,11 @@ const Regions = () => {
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={() => handleEditCountry(country)} className="cursor-pointer">
+                                                <DropdownMenuItem onClick={() => handleUpdateClick(region)} className="cursor-pointer">
                                                     <Edit className="mr-2 h-4 w-4" />
                                                     <span>Düzenle</span>
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleDeleteCountry(country.id)} variant="destructive" className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
+                                                <DropdownMenuItem onClick={() => handleDeleteRegion(region.id)} variant="destructive" className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
                                                     <Trash2 className="mr-2 h-4 w-4" />
                                                     <span>Sil</span>
                                                 </DropdownMenuItem>
@@ -291,6 +317,80 @@ const Regions = () => {
                                 </div>
                             </div>
                             <DialogFooter>
+                                <Button variant="outline" onClick={() => setUpdateRegionDialogOpen(false)}>
+                                    İptal
+                                </Button>
+                                <Button 
+                                type="submit"
+                                disabled={isLoading}
+                                >
+                                    {isLoading ? "Kaydediliyor..." : "Kaydet"}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </Form>
+                </DialogContent>
+            </Dialog>
+            <Dialog open={updateRegionDialogOpen} onOpenChange={setUpdateRegionDialogOpen}>
+            <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Bölge Düzenle</DialogTitle>
+                        <DialogDescription>
+                            Bölge bilgilerini düzenleyip güncelle butonuna tıklayın.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <Form {...updateRegionForm}>
+                        <form onSubmit={updateRegionForm.handleSubmit(handleUpdateRegion)} className="space-y-8">
+                            <div className="grid gap-4 py-4">
+                                <div className="flex justify-between">
+                                    <FormField
+                                        control={updateRegionForm.control}
+                                        name="name"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>
+                                                    Bölge Adı
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Input {...field} placeholder="Bölge adını giriniz"/>
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <div className="flex justify-between">
+                                    <FormField
+                                        control={form.control}
+                                        name="country"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Ülke</FormLabel>
+                                                <Select
+                                                    disabled={isLoading}
+                                                    onValueChange={field.onChange}
+                                                    value={field.value}
+                                                >
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Ülke seçiniz" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                {countries.map((country) => (
+                                                    <SelectItem key={country.id} value={country.id}>
+                                                        {country.name}
+                                                    </SelectItem>
+                                                ))}
+                                                </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            </div>
+                            <DialogFooter>
                                 <Button variant="outline" onClick={() => setAddRegionDialogOpen(false)}>
                                     İptal
                                 </Button>
@@ -303,7 +403,7 @@ const Regions = () => {
                             </DialogFooter>
                         </form>
                     </Form>
-                </DialogContent>
+                </DialogContent>        
             </Dialog>
         </>
     )

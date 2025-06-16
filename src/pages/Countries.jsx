@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react';
 import { countriesService } from '../services/countries.service';
 import { MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import * as z from 'zod'
+import { toast } from 'sonner';
+import { Button } from '../components/ui/button';
+import { Label } from '../components/ui/label';
+import { Input } from '../components/ui/input';
+import { Plus } from 'lucide-react';
+import { useForm } from "react-hook-form";
+import { zodResolver } from '@hookform/resolvers/zod'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -14,23 +22,40 @@ import {
     DialogTitle,
     DialogFooter,
     DialogDescription,
-    DialogTrigger,
-    DialogClose
 } from '../components/ui/dialog';
-import { toast } from 'sonner';
-import { Button } from '../components/ui/button';
-import { Label } from '../components/ui/label';
-import { Input } from '../components/ui/input';
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "../components/ui/form";
 
 const Countries = () => {
     const [countries, setCountries] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isEditFormLoading, setIsEditFormLoading] = useState(false);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [currentCountry, setCurrentCountry] = useState(null);
     const [editCountryName, setEditCountryName] = useState('');
+    const [addCountryDialogOpen, setAddCountryDialogOpen] = useState(false);
     
-    const handleEditCountry = (country) => {
+    // Form doğrulama şeması
+    const formSchema = z.object({
+        name: z.string().min(2, {
+        message: "Ülke adı en az 2 karakter olmalıdır.",
+        }),
+    });
+    
+    // Add Region Form tanımlaması
+    const form = useForm({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            name: "",
+        },
+    }); 
+    
+    const handleUpdateCountry = (country) => {
         console.log('Edit country with ID:', country.id);
         setCurrentCountry(country);
         setEditCountryName(country.name);
@@ -38,20 +63,20 @@ const Countries = () => {
     };
     
     const handleSaveEdit = async () => {
-        setIsEditFormLoading(true);
+        setIsLoading(true);
         try {
             if (!currentCountry || !editCountryName.trim()) return;
             
             await countriesService.updateCountry(currentCountry.id, { name: editCountryName });
             toast.success('Ülke başarıyla güncellendi');
-            setIsEditFormLoading(false);
+            setIsLoading(false);
             setEditDialogOpen(false);
             fetchCountries(); // Refresh the list
         } catch (error) {
             console.error('Error updating country:', error);
             toast.error('Ülke güncelleme hatası');
         } finally {
-            setIsEditFormLoading(false);
+            setIsLoading(false);
         }
     };
     
@@ -96,6 +121,24 @@ const Countries = () => {
             setIsLoading(false);
         }
     };
+
+    const handleAddCountry = async () => {
+        setIsLoading(true);
+        try {
+            if (!form.getValues().name.trim()) return;
+            
+            await countriesService.createCountry({ name: form.getValues().name });
+            toast.success('Ülke başarıyla eklendi');
+            setIsLoading(false);
+            setAddCountryDialogOpen(false);
+            fetchCountries(); // Refresh the list
+        } catch (error) {
+            console.error('Error adding country:', error);
+            toast.error('Ülke ekleme hatası');
+        } finally {
+            setIsLoading(false);
+        }
+    };
     
     useEffect(() => {
         fetchCountries();
@@ -106,7 +149,12 @@ const Countries = () => {
     return (
         <>
             <div className="max-w-4xl p-6">
-                <h1 className="text-2xl font-bold mb-6">Ülkeler</h1>
+                <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-2xl font-bold mb-6">Ülkeler</h1>
+                    <Button variant="default" size="icon" onClick={() => setAddCountryDialogOpen(true)}>
+                        <Plus className="h-5 w-5" />
+                    </Button>
+                </div>
                 {isLoading ? (
                     <p>Yükleniyor...</p>
                 ): (
@@ -117,13 +165,13 @@ const Countries = () => {
                                     <li key={country.id} className="p-3 border rounded hover:bg-gray-50 flex justify-between items-center">
                                         <span>{country.name}</span>
                                         <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
+                                            <DropdownMenuTrigger>
                                                 <Button variant="ghost" size="icon">
                                                     <MoreHorizontal className="h-5 w-5" />
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={() => handleEditCountry(country)} className="cursor-pointer">
+                                                <DropdownMenuItem onClick={() => handleUpdateCountry(country)} className="cursor-pointer">
                                                     <Edit className="mr-2 h-4 w-4" />
                                                     <span>Düzenle</span>
                                                 </DropdownMenuItem>
@@ -169,11 +217,55 @@ const Countries = () => {
                         </Button>
                         <Button 
                         onClick={handleSaveEdit} 
-                        disabled={isEditFormLoading}
+                        disabled={isLoading}
                         >
-                            {isEditFormLoading ? "Kaydediliyor..." : "Kaydet"}
+                            {isLoading ? "Kaydediliyor..." : "Kaydet"}
                         </Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            <Dialog open={addCountryDialogOpen} onOpenChange={setAddCountryDialogOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Ülke Ekle</DialogTitle>
+                        <DialogDescription>
+                            Ülke adını düzenleyip kaydet butonuna tıklayın.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(handleAddCountry)} className="space-y-8">
+                            <div className="grid gap-4 py-4">
+                                <div className="flex justify-between">
+                                    <FormField
+                                        control={form.control}
+                                        name="name"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>
+                                                    Ülke Adı
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Input {...field} placeholder="Ülke adını giriniz"/>
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setAddCountryDialogOpen(false)}>
+                                    İptal
+                                </Button>
+                                <Button 
+                                //onClick={handleSaveEdit} 
+                                disabled={isLoading}
+                                >
+                                    {isLoading ? "Kaydediliyor..." : "Kaydet"}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </Form>
                 </DialogContent>
             </Dialog>
         </>

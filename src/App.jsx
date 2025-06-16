@@ -1,14 +1,12 @@
 import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom"
 // import DashboardLayout from "./layout/DashboardLayout"
 import Login from "./pages/Login";
-import TestPage1 from "./pages/TestPage1";
-import TestPage2 from "./pages/TestPage2";
 import DashboardNavbar from "./layout/dashboarNavbar";
 import ProtectedRoutes from "./ProtectedRoutes";
 import CreateUser from "./pages/CreateUser";
 import Countries from "./pages/Countries";
-import CreateCountry from "./pages/CreateCountry";
 import Regions from "./pages/Regions";
+import Groups from "./pages/Groups";
 
 function App() {
   const router = createBrowserRouter([
@@ -28,20 +26,16 @@ function App() {
               element: <CreateUser />,
             },
             {
-              path: "test-page-2",
-              element: <TestPage2 />,
-            },
-            {
               path: "country-list",
               element: <Countries />,
             },
             {
-              path: "create-country",
-              element: <CreateCountry />,
-            },
-            {
               path: "region-list",
               element: <Regions />,
+            },
+            {
+              path: "group-list",
+              element: <Groups />,
             },
           ],
         }
