@@ -1,6 +1,7 @@
 // Rota haritası - her rotanın başlığını ve üst rotasını tanımlar
 const routeMap = {
   '/': { title: 'Ana Sayfa', parent: null },
+  '/user-list': { title: 'Kullanıcı Listesi', parent: '/' },
   '/create-user': { title: 'Yeni Kullanıcı', parent: '/' },
   '/country-list': { title: 'Ülkeler', parent: '/' },
   '/region-list': { title: 'Bölge Listesi', parent: '/' },

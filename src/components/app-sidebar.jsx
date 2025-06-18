@@ -64,7 +64,7 @@ const data = {
         },
         {
           title: "Kullanıcılar",
-          url: "/test-page-2",
+          url: "/user-list",
         },
       ]
     },

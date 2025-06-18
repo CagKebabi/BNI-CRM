@@ -7,6 +7,7 @@ import CreateUser from "./pages/CreateUser";
 import Countries from "./pages/Countries";
 import Regions from "./pages/Regions";
 import Groups from "./pages/Groups";
+import Users from "./pages/Users";
 
 function App() {
   const router = createBrowserRouter([
@@ -36,6 +37,10 @@ function App() {
             {
               path: "group-list",
               element: <Groups />,
+            },
+            {
+              path: "user-list",
+              element: <Users />,
             },
           ],
         }

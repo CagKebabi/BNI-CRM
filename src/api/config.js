@@ -7,7 +7,9 @@ export const ENDPOINTS = {
   // Auth endpoints
   LOGIN: '/users/login/',
   // Users endpoints
+  GET_USERS: '/users/users/',
   CREATE_USER: '/users/users/',
+  DELETE_USER: (id) => `/users/users/${id}/`,
   // Organization endpoints
   COUNTRIES: '/organization/countries/',
   UPDATE_COUNTRY: (id) => `/organization/countries/${id}/`,

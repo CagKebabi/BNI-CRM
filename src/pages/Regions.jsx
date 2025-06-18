@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { regionsService } from '../services/regions.service';
 import { countriesService } from '../services/countries.service';
-import { MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import { usersService } from '../services/users.service';
+import { MoreHorizontal, Edit, Trash2, MapPin, User, Earth } from 'lucide-react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -21,6 +22,7 @@ import {
 } from '../components/ui/dialog';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
 import { Input } from '../components/ui/input';
 import { Plus } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
@@ -36,6 +38,7 @@ import {
 const Regions = () => {
     const [regions, setRegions] = useState([]);
     const [countries, setCountries] = useState([]);
+    const [users, setUsers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [addRegionDialogOpen, setAddRegionDialogOpen] = useState(false);
     const [updateRegionDialogOpen, setUpdateRegionDialogOpen] = useState(false);
@@ -47,21 +50,21 @@ const Regions = () => {
             console.log('API Response:', response);
             
             // Handle different response structures
-            let countriesData = [];
+            let regionsData = [];
             if (response && Array.isArray(response)) {
-                countriesData = response;
+                regionsData = response;
             } else if (response && Array.isArray(response.data)) {
-                countriesData = response.data;
+                regionsData = response.data;
             } else if (response && response.data) {
                 // If it's a single object, wrap it in an array
-                countriesData = [response.data];
+                regionsData = [response.data];
             } else if (response) {
                 // If it's a single object directly in response
-                countriesData = [response];
+                regionsData = [response];
             }
             
-            console.log('Ülke listesi alındı:', countriesData);
-            setRegions(countriesData);
+            console.log('Bölge listesi alındı:', regionsData);
+            setRegions(regionsData);
             setIsLoading(false);
         } catch (error) {
             console.error('Error fetching countries:', error);
@@ -89,7 +92,7 @@ const Regions = () => {
                 countriesData = [response];
             }
             
-            console.log('Processed countries data:', countriesData);
+            console.log('Ülke listesi alındı:', countriesData);
             setCountries(countriesData);
             setIsLoading(false);
         } catch (error) {
@@ -98,10 +101,40 @@ const Regions = () => {
             setIsLoading(false);
         }
     };
+
+    const fetchUsers = async () => {
+        try {
+            const response = await usersService.getUsers();
+            console.log('API Response:', response);
+            
+            // Handle different response structures
+            let usersData = [];
+            if (response && Array.isArray(response)) {
+                usersData = response;
+            } else if (response && Array.isArray(response.data)) {
+                usersData = response.data;
+            } else if (response && response.data) {
+                // If it's a single object, wrap it in an array
+                usersData = [response.data];
+            } else if (response) {
+                // If it's a single object directly in response
+                usersData = [response];
+            }
+            
+            console.log('Kullanıcı listesi alındı:', usersData);
+            setUsers(usersData);
+            setIsLoading(false);
+        } catch (error) {
+            console.error('Error fetching countries:', error);
+            toast.error('Kullanıcı listesi alınamadı');
+            setIsLoading(false);
+        }
+    };
     
     useEffect(() => {
         fetchRegions();
         fetchCountries();
+        fetchUsers();
     }, []);
 
     // Form doğrulama şeması
@@ -113,7 +146,12 @@ const Regions = () => {
             required_error: "Lütfen bir ülke seçiniz",
         }).refine((value) => countries.some(country => country.id === value), {
             message: "Lütfen geçerli bir ülke seçiniz",
-        })
+        }),
+        exc_director: z.string({
+            required_error: "Lütfen bir yetkili seçiniz",
+        }).refine((value) => users.some(user => user.id === value), {
+            message: "Lütfen geçerli bir yetkili seçiniz",
+        }),
     });
 
     // Add Region Form tanımlaması
@@ -122,6 +160,7 @@ const Regions = () => {
         defaultValues: {
             name: "",
             country: "",
+            exc_director: "",
         },
     });
 
@@ -130,6 +169,7 @@ const Regions = () => {
         defaultValues: {
             name: "",
             country: "",
+            exc_director: "",
         },
     });
 
@@ -152,7 +192,8 @@ const Regions = () => {
             setAddRegionDialogOpen(false);
             form.reset({
                 name: "",
-                country: ""
+                country: "",
+                exc_director: "",
             });
         }
     };
@@ -161,13 +202,16 @@ const Regions = () => {
     const handleUpdateClick = (region) => {
         setCurrentRegion(region);
         // Form değerlerini güncelle
-        const selectedCountry = countries.find(country => country.id === region.country);
-        console.log('Selected country:', selectedCountry);
+        console.log('Selected region:', region);
         
-        updateRegionForm.reset({
-            name: region.name,
-            country: region.country // Ülkenin ID'sini kullan
-        });
+        // Form değerlerini sıfırla ve yeni değerleri ata
+        updateRegionForm.reset();
+        
+        // Her bir form alanını ayrı ayrı güncelle
+        updateRegionForm.setValue('name', region.name);
+        updateRegionForm.setValue('country', region.country);
+        updateRegionForm.setValue('exc_director', region.exc_director);
+        
         setUpdateRegionDialogOpen(true);
     };
 
@@ -176,10 +220,9 @@ const Regions = () => {
         
         setIsLoading(true);
         try {
-            const response = await regionsService.updateRegion(currentRegion.id, {
-                name: data.name,
-                country: data.country
-            });
+            console.log('Güncellenen bölge:', data);
+            
+            const response = await regionsService.updateRegion(currentRegion.id, data);
             console.log('Bölge güncellendi:', response);
             fetchRegions();
             toast.success('Bölge başarıyla güncellendi');
@@ -192,7 +235,8 @@ const Regions = () => {
             setCurrentRegion(null);
             updateRegionForm.reset({
                 name: "",
-                country: ""
+                country: "",
+                exc_director: ""
             });
         }
     };
@@ -228,28 +272,60 @@ const Regions = () => {
                     <div>
                         {regions && regions.length > 0 ? (
                             <ul className="space-y-2">
-                                {regions.map((region) => (
-                                    <li key={region.id} className="p-3 border rounded hover:bg-gray-50 flex justify-between items-center">
-                                        <span>{region.name}</span>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon">
-                                                    <MoreHorizontal className="h-5 w-5" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={() => handleUpdateClick(region)} className="cursor-pointer">
-                                                    <Edit className="mr-2 h-4 w-4" />
-                                                    <span>Düzenle</span>
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleDeleteRegion(region.id)} variant="destructive" className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
-                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                    <span>Sil</span>
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </li>
-                                ))}
+                                {regions.map((region) => {
+                                    const country = countries.find(c => c.id === region.country);
+                                    const director = users.find(u => u.id === region.exc_director);
+                                    
+                                    return (
+                                        <li key={region.id}>
+                                            <Card key={region.id} className="hover:shadow-lg transition-shadow duration-200">
+                                                <CardHeader className="pb-2 flex justify-between">
+                                                    <div className="flex justify-between items-center">
+                                                        <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+                                                            <div className="p-2 rounded-lg bg-red-50 text-red-700">
+                                                                <MapPin className="h-5 w-5" />
+                                                            </div>
+                                                            {region.name}
+                                                        </CardTitle>
+                                                    </div>
+                                                    <div>
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger>
+                                                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                                                    <MoreHorizontal className="h-5 w-5" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end">
+                                                                <DropdownMenuItem onClick={() => handleUpdateClick(region)} className="cursor-pointer">
+                                                                    <Edit className="mr-2 h-4 w-4" />
+                                                                    <span>Düzenle</span>
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem onClick={() => handleDeleteRegion(region.id)} variant="destructive" className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
+                                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                                    <span>Sil</span>
+                                                                </DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </div>
+                                                </CardHeader>
+                                                <CardContent className="space-y-2">
+                                                    <div className="flex items-center gap-2 text-sm">
+                                                        <div className="p-1.5 rounded-md bg-green-50">
+                                                            <Earth className="h-4 w-4 text-green-600" />
+                                                        </div>
+                                                        <span className="font-medium">{country ? country.name : 'Ülke belirtilmemiş'}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 text-sm">
+                                                        <div className="p-1.5 rounded-md bg-blue-50">
+                                                            <User className="h-4 w-4 text-blue-600" />
+                                                        </div>
+                                                        <span className="font-medium">{director ? `${director.first_name} ${director.last_name}` : 'Yönetici belirtilmemiş'}</span>
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        </li>
+                                    );
+                                })}
                             </ul>
                         ) : (
                             <p>Herhangi bir bölge bulunamadı.</p>
@@ -315,6 +391,37 @@ const Regions = () => {
                                         )}
                                     />
                                 </div>
+                                <div className="flex justify-between">
+                                    <FormField
+                                        control={form.control}
+                                        name="exc_director"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Yönetici</FormLabel>
+                                                
+                                                    <Select
+                                                    disabled={isLoading}
+                                                    onValueChange={field.onChange}
+                                                    value={field.value}
+                                                    >
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Yönetici seçiniz" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {users.map((user) => (
+                                                            <SelectItem key={user.id} value={user.id}>
+                                                                {user.first_name} {user.last_name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
                             </div>
                             <DialogFooter>
                                 <Button variant="outline" onClick={() => setUpdateRegionDialogOpen(false)}>
@@ -361,7 +468,7 @@ const Regions = () => {
                                 </div>
                                 <div className="flex justify-between">
                                     <FormField
-                                        control={form.control}
+                                        control={updateRegionForm.control}
                                         name="country"
                                         render={({ field }) => (
                                             <FormItem>
@@ -389,13 +496,43 @@ const Regions = () => {
                                         )}
                                     />
                                 </div>
+                                <div className="flex justify-between">
+                                    <FormField
+                                        control={updateRegionForm.control}
+                                        name="exc_director"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Yönetici</FormLabel>
+                                                
+                                                    <Select
+                                                    disabled={isLoading}
+                                                    onValueChange={field.onChange}
+                                                    value={field.value}
+                                                    >
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Yönetici seçiniz" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {users.map((user) => (
+                                                            <SelectItem key={user.id} value={user.id}>
+                                                                {user.first_name} {user.last_name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
                             </div>
                             <DialogFooter>
                                 <Button variant="outline" onClick={() => setAddRegionDialogOpen(false)}>
                                     İptal
                                 </Button>
                                 <Button 
-                                //onClick={handleSaveEdit} 
                                 disabled={isLoading}
                                 >
                                     {isLoading ? "Kaydediliyor..." : "Kaydet"}
