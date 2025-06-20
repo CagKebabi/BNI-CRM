@@ -22,6 +22,16 @@ class GroupsService {
             throw error;
         }
     }
+    async updateGroup(id, data) {
+        try {
+            const response = await apiService.put(ENDPOINTS.UPDATE_GROUP(id), data);
+            console.log("Grup güncellendi:", response);
+            return response;
+        } catch (error) {
+            console.error("Grup güncellenemedi:", error);
+            throw error;
+        }
+    }
     async deleteGroup(id) {
         try {
             const response = await apiService.delete(ENDPOINTS.DELETE_GROUP(id));

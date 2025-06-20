@@ -70,6 +70,8 @@ function Groups() {
     const [regions, setRegions] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [addGroupDialogOpen, setAddGroupDialogOpen] = useState(false);
+    const [updateGroupDialogOpen, setUpdateGroupDialogOpen] = useState(false);
+    const [selectedGroup, setSelectedGroup] = useState(null);
     
     const formSchema = z.object({
         name: z.string().min(2, {
@@ -98,8 +100,23 @@ function Groups() {
         }),
     });
     
-    // Add Region Form tanımlaması
+    // Add Group Form tanımlaması
     const form = useForm({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            name: "",
+            region: "",
+            meeting_day: "",
+            start_time: "08:30:00",
+            end_time: "10:30:00",
+            meeting_date: "",
+            term_start: "",
+            term_end: "",
+        },
+    }); 
+
+    // Edit Group Form tanımlaması
+    const updateGroupForm = useForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
             name: "",
@@ -141,6 +158,28 @@ function Groups() {
             setIsLoading(false);
         }
     };
+
+    // Update Region
+    const handleUpdateClick = (group) => {
+        setSelectedGroup(group);
+        // Form değerlerini güncelle
+        console.log('Selected group:', group);
+        
+        // Form değerlerini sıfırla ve yeni değerleri ata
+        updateGroupForm.reset();
+        
+        // Her bir form alanını ayrı ayrı güncelle
+        updateGroupForm.setValue('name', group.name);
+        updateGroupForm.setValue('region', group.region);
+        updateGroupForm.setValue('meeting_day', group.meeting_day);
+        updateGroupForm.setValue('start_time', group.start_time);
+        updateGroupForm.setValue('end_time', group.end_time);
+        updateGroupForm.setValue('meeting_date', group.meeting_date);
+        updateGroupForm.setValue('term_start', group.term_start);
+        updateGroupForm.setValue('term_end', group.term_end);
+        
+        setUpdateGroupDialogOpen(true);
+    };
     
     const handleAddGroup = async (data) => {
         setIsLoading(true);
@@ -155,6 +194,24 @@ function Groups() {
         } catch (error) {
             console.error('Error adding group:', error);
             toast.error('Grup ekleme hatası');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleUpdateGroup = async (data) => {
+        setIsLoading(true);
+        try {
+            if (!data.name.trim()) return;
+            
+            await groupsService.updateGroup(selectedGroup.id, data);
+            toast.success('Grup başarıyla güncellendi');
+            setIsLoading(false);
+            setUpdateGroupDialogOpen(false);
+            fetchGroups(); // Refresh the list
+        } catch (error) {
+            console.error('Error updating group:', error);
+            toast.error('Grup güncelleme hatası');
         } finally {
             setIsLoading(false);
         }
@@ -216,7 +273,7 @@ function Groups() {
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem onClick={() => handleEditGroup(group)} variant="default" className="cursor-pointer">
+                                                    <DropdownMenuItem onClick={() => handleUpdateClick(group)} variant="default" className="cursor-pointer">
                                                         <Edit className="mr-2 h-4 w-4" />
                                                         Düzenle
                                                     </DropdownMenuItem>
@@ -611,6 +668,308 @@ function Groups() {
                         </form>
                     </Form>
                 </DialogContent>
+            </Dialog>
+            <Dialog open={updateGroupDialogOpen} onOpenChange={setUpdateGroupDialogOpen}>
+            <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Grup Ekle</DialogTitle>
+                        <DialogDescription>
+                            Grup adını ve açıklamasını girip kaydet butonuna tıklayın.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <Form {...updateGroupForm}>
+                        <form onSubmit={updateGroupForm.handleSubmit(handleUpdateGroup)} className="space-y-4">
+                            <FormField
+                                control={updateGroupForm.control}
+                                name="name"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Grup Adı</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Grup adı" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={updateGroupForm.control}
+                                name="region"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Bölge</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Bölge seçiniz" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {regions.map((region) => (
+                                                    <SelectItem key={region.id} value={region.id}>
+                                                        {region.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={updateGroupForm.control}
+                                name="meeting_day"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Toplantı Günü</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Gün seçiniz" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'].map((day) => (
+                                                    <SelectItem key={day} value={day}>
+                                                        {day}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={updateGroupForm.control}
+                                    name="start_time"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Başlangıç Saati</FormLabel>
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <FormControl>
+                                                        <Button
+                                                            variant={"outline"}
+                                                            className={cn(
+                                                                "w-full pl-3 text-left font-normal",
+                                                                !field.value && "text-muted-foreground"
+                                                            )}
+                                                        >
+                                                            {field.value || "Başlangıç saati"}
+                                                            <Clock className="ml-auto h-4 w-4 opacity-50" />
+                                                        </Button>
+                                                    </FormControl>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-4" align="start">
+                                                    <div className="flex flex-col gap-2">
+                                                        <Input
+                                                            type="time"
+                                                            step="1"
+                                                            value={field.value}
+                                                            onChange={(e) => field.onChange(e.target.value)}
+                                                            className="w-[160px]"
+                                                        />
+                                                    </div>
+                                                </PopoverContent>
+                                            </Popover>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={updateGroupForm.control}
+                                    name="end_time"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Bitiş Saati</FormLabel>
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <FormControl>
+                                                        <Button
+                                                            variant={"outline"}
+                                                            className={cn(
+                                                                "w-full pl-3 text-left font-normal",
+                                                                !field.value && "text-muted-foreground"
+                                                            )}
+                                                        >
+                                                            {field.value || "Bitiş saati"}
+                                                            <Clock className="ml-auto h-4 w-4 opacity-50" />
+                                                        </Button>
+                                                    </FormControl>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-4" align="start">
+                                                    <div className="flex flex-col gap-2">
+                                                        <Input
+                                                            type="time"
+                                                            step="1"
+                                                            value={field.value}
+                                                            onChange={(e) => field.onChange(e.target.value)}
+                                                            className="w-[160px]"
+                                                        />
+                                                    </div>
+                                                </PopoverContent>
+                                            </Popover>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                            <FormField
+                                control={updateGroupForm.control}
+                                name="meeting_date"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-col">
+                                        <FormLabel>Toplantı Tarihi</FormLabel>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <FormControl>
+                                                    <Button
+                                                        variant={"outline"}
+                                                        className={cn(
+                                                            "w-full pl-3 text-left font-normal",
+                                                            !field.value && "text-muted-foreground"
+                                                        )}
+                                                    >
+                                                        {field.value ? (
+                                                            format(new Date(field.value), "PPP", { locale: tr })
+                                                        ) : (
+                                                            <span>Toplantı tarihi seçin</span>
+                                                        )}
+                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                    </Button>
+                                                </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={field.value ? new Date(field.value) : undefined}
+                                                    onSelect={(date) => {
+                                                        if (date) {
+                                                            field.onChange(format(date, 'yyyy-MM-dd'))
+                                                        }
+                                                    }}
+                                                    disabled={(date) =>
+                                                        date < new Date("1900-01-01")
+                                                    }
+                                                    initialFocus
+                                                    locale={tr}
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={updateGroupForm.control}
+                                    name="term_start"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-col">
+                                            <FormLabel>Dönem Başlangıç</FormLabel>
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <FormControl>
+                                                        <Button
+                                                            variant={"outline"}
+                                                            className={cn(
+                                                                "w-full pl-3 text-left font-normal",
+                                                                !field.value && "text-muted-foreground"
+                                                            )}
+                                                        >
+                                                            {field.value ? (
+                                                                format(new Date(field.value), "PPP", { locale: tr })
+                                                            ) : (
+                                                                <span>Dönem başlangıç tarihi</span>
+                                                            )}
+                                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                        </Button>
+                                                    </FormControl>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0" align="start">
+                                                    <Calendar
+                                                        mode="single"
+                                                        selected={field.value ? new Date(field.value) : undefined}
+                                                        onSelect={(date) => {
+                                                            if (date) {
+                                                                field.onChange(format(date, 'yyyy-MM-dd'))
+                                                            }
+                                                        }}
+                                                        disabled={(date) =>
+                                                            date < new Date("1900-01-01")
+                                                        }
+                                                        initialFocus
+                                                        locale={tr}
+                                                    />
+                                                </PopoverContent>
+                                            </Popover>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={updateGroupForm.control}
+                                    name="term_end"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-col">
+                                            <FormLabel>Dönem Bitiş</FormLabel>
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <FormControl>
+                                                        <Button
+                                                            variant={"outline"}
+                                                            className={cn(
+                                                                "w-full pl-3 text-left font-normal",
+                                                                !field.value && "text-muted-foreground"
+                                                            )}
+                                                        >
+                                                            {field.value ? (
+                                                                format(new Date(field.value), "PPP", { locale: tr })
+                                                            ) : (
+                                                                <span>Dönem bitiş tarihi</span>
+                                                            )}
+                                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                        </Button>
+                                                    </FormControl>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0" align="start">
+                                                    <Calendar
+                                                        mode="single"
+                                                        selected={field.value ? new Date(field.value) : undefined}
+                                                        onSelect={(date) => {
+                                                            if (date) {
+                                                                field.onChange(format(date, 'yyyy-MM-dd'))
+                                                            }
+                                                        }}
+                                                        disabled={(date) =>
+                                                            date < new Date("1900-01-01")
+                                                        }
+                                                        initialFocus
+                                                        locale={tr}
+                                                    />
+                                                </PopoverContent>
+                                            </Popover>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setUpdateGroupDialogOpen(false)}>
+                                    İptal
+                                </Button>
+                                <Button 
+                                //onClick={handleSaveEdit} 
+                                disabled={isLoading}
+                                >
+                                    {isLoading ? "Kaydediliyor..." : "Kaydet"}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </Form>
+                </DialogContent>            
             </Dialog>
         </>
     )
