@@ -58,10 +58,10 @@ const data = {
       icon: SquareTerminal,
       isActive: true,
       items: [
-        {
-          title: "Yeni Kullanıcı",
-          url: "/create-user",
-        },
+        // {
+        //   title: "Yeni Kullanıcı",
+        //   url: "/create-user",
+        // },
         {
           title: "Kullanıcılar",
           url: "/user-list",

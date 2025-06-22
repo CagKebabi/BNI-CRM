@@ -118,3 +118,8 @@
     @apply bg-background text-foreground;
   }
 }
+
+.loginBG {
+  background-image: url(/src/assets/bni-logo_brandlogos.net_vdxgj.png);
+  background-position: center top;
+}

@@ -60,7 +60,7 @@ export function LoginForm({ className, ...props }) {
               <div className="flex flex-col items-center text-center gap-1.5">
                 <h1 className="text-2xl font-bold">Hoşgeldiniz</h1>
                 <p className="text-balance text-muted-foreground">
-                  BNI CRM hesabınıza giriş yapın
+                  BNI hesabınıza giriş yapın
                 </p>
               </div>
               <div className="grid gap-2">
