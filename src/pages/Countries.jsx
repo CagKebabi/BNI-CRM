@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { countriesService } from '../services/countries.service';
-import { MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Edit, Trash2, Loader2 } from 'lucide-react';
 import * as z from 'zod'
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
@@ -156,7 +156,9 @@ const Countries = () => {
                     </Button>
                 </div>
                 {isLoading ? (
-                    <p>Yükleniyor...</p>
+                    <div className="flex justify-center items-center h-64">
+                        <Loader2 className="h-8 w-8 animate-spin" />
+                    </div>
                 ): (
                     <div>
                         {countries && countries.length > 0 ? (

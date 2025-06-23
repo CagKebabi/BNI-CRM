@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { regionsService } from '../services/regions.service';
 import { countriesService } from '../services/countries.service';
 import { usersService } from '../services/users.service';
-import { MoreHorizontal, Edit, Trash2, MapPin, User, Earth } from 'lucide-react';
+import { MoreHorizontal, Edit, Trash2, MapPin, User, Earth, Loader2 } from 'lucide-react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -267,7 +267,9 @@ const Regions = () => {
                     </Button>
                 </div>
                 {isLoading ? (
-                    <p>Yükleniyor...</p>
+                    <div className="flex justify-center items-center h-64">
+                        <Loader2 className="h-8 w-8 animate-spin" />
+                    </div>
                 ): (
                     <div>
                         {regions && regions.length > 0 ? (

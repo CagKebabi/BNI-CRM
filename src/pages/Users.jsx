@@ -298,6 +298,8 @@ const Users = () => {
 
     const handleDeleteUser = async (userId) => {
         setIsLoading(true);
+        console.log('Silenecek kullanıcı ID:', userId);
+        
         try {
             await usersService.deleteUser(userId);
             toast.success('Kullanıcı başarıyla silindi');

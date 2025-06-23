@@ -25,7 +25,7 @@ class UsersService {
     }
     async deleteUser(userId) {
         try {
-            const response = await apiService.delete(`${ENDPOINTS.DELETE_USER}/${userId}`);
+            const response = await apiService.delete(`${ENDPOINTS.DELETE_USER(userId)}`);
             console.log("User deleted:", response);
             return response;
         } catch (error) {

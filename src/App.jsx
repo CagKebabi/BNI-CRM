@@ -8,6 +8,7 @@ import Countries from "./pages/Countries";
 import Regions from "./pages/Regions";
 import Groups from "./pages/Groups";
 import Users from "./pages/Users";
+import Home from "./pages/Home";
 
 function App() {
   const router = createBrowserRouter([
@@ -18,10 +19,10 @@ function App() {
           path: "/",
           element: <DashboardNavbar />,
           children: [
-            // {
-            //   index: true,
-            //   element: <TestPage1 />,
-            // },
+            {
+              index: true,
+              element: <Home />,
+            },
             {
               path: "create-user",
               element: <CreateUser />,
