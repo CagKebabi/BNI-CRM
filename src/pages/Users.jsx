@@ -54,18 +54,19 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { se } from 'date-fns/locale/se';
 
 // Form doğrulama şeması
 const formSchema = z.object({
     email: z.string().email({
         message: "Geçerli bir email adresi giriniz.",
     }),
-    password: z.string().min(8, {
-        message: "Şifre en az 8 karakter olmalıdır.",
-    }),
-    password2: z.string().min(8, {
-        message: "Şifre tekrarı en az 8 karakter olmalıdır.",
-    }),
+    password: z.string()
+        .min(8, { message: "Şifre en az 8 karakter olmalıdır." })
+        .regex(/[A-Z]/, { message: "Şifre en az bir büyük harf içermelidir." })
+        .regex(/[0-9]/, { message: "Şifre en az bir rakam içermelidir." }),
+    password2: z.string(),
     first_name: z.string().min(2, {
         message: "Ad en az 2 karakter olmalıdır.",
     }),
@@ -75,7 +76,28 @@ const formSchema = z.object({
     gsm: z.string().min(10, {
         message: "GSM en az 10 karakter olmalıdır.",
     }),
-    group_id: z.string(),
+    group_id: z.string().uuid({
+        message: "Geçerli bir grup seçiniz.",
+    }),
+}).refine((data) => data.password === data.password2, {
+    message: "Şifreler eşleşmiyor.",
+    path: ["password2"],
+});
+
+const formSchemaUserUpdate = z.object({
+    first_name: z.string().min(2, {
+        message: "Ad en az 2 karakter olmalıdır.",
+    }),
+    last_name: z.string().min(2, {
+        message: "Soyad en az 2 karakter olmalıdır.",
+    }),
+    gsm: z.string().min(10, {
+        message: "GSM en az 10 karakter olmalıdır.",
+    }),
+    is_active: z.boolean(),
+    group_id: z.string().uuid({
+        message: "Geçerli bir grup seçiniz.",
+    }),
 });
 
 const Users = () => {
@@ -83,6 +105,8 @@ const Users = () => {
     const [groups, setGroups] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
+    const [updateUserDialogOpen, setUpdateUserDialogOpen] = useState(false);
+    const [selectedUser, setSelectedUser] = useState(null);
     const [sorting, setSorting] = useState([]);
     const [columnFilters, setColumnFilters] = useState([]);
     const [globalFilter, setGlobalFilter] = useState("");
@@ -97,6 +121,17 @@ const Users = () => {
         first_name: "",
         last_name: "",
         gsm: "",
+        group_id: "", //isteğe bağlı
+        },
+    });
+
+    const formUpdate = useForm({
+        resolver: zodResolver(formSchemaUserUpdate),
+        defaultValues: {
+        first_name: "",
+        last_name: "",
+        gsm: "",
+        is_active: false,
         group_id: "", //isteğe bağlı
         },
     });
@@ -292,8 +327,46 @@ const Users = () => {
     }
 
     const handleUpdateClick = (user) => {
-        console.log('Güncellenecek kullanıcı:', user);
-        // TODO: Güncelleme modalını aç
+        setSelectedUser(user);
+        // Form değerlerini güncelle
+        console.log('Selected user:', user);
+        
+        // Form değerlerini sıfırla ve yeni değerleri ata
+        formUpdate.reset();
+        
+        // Her bir form alanını ayrı ayrı güncelle
+        formUpdate.setValue('first_name', user.first_name);
+        formUpdate.setValue('last_name', user.last_name);
+        formUpdate.setValue('gsm', user.gsm);
+        formUpdate.setValue('is_active', user.is_active);
+        formUpdate.setValue('group_id', user.group);
+        
+        setUpdateUserDialogOpen(true);
+    };
+
+    const handleUpdateUser = async (data) => {
+        setIsLoading(true);
+        console.log('Güncellenecek kullanıcı:', data);
+        try {
+            await usersService.updateUser(selectedUser.id, data);
+            toast.success('Kullanıcı başarıyla güncellendi');
+            fetchUsers(); // Listeyi yenile
+        } catch (error) {
+            console.error('Error updating user:', error);
+            toast.error('Kullanıcı güncelleme hatası');
+        } finally {
+            setIsLoading(false);
+            setUpdateUserDialogOpen(false);
+            form.reset({
+                email: "",
+                password: "",
+                password2: "",
+                first_name: "",
+                last_name: "",
+                gsm: "",
+                group_id: "",
+            });
+        }
     };
 
     const handleDeleteUser = async (userId) => {
@@ -527,6 +600,107 @@ const Users = () => {
                                             disabled={isLoading}
                                             onValueChange={field.onChange}
                                             value={field.value}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Grup seçiniz" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {groups.map((group) => (
+                                                    <SelectItem key={group.id} value={group.id}>
+                                                        {group.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                    
+                            <Button type="submit" disabled={isLoading}>
+                                {isLoading ? "Kaydediliyor..." : "Kaydet"}
+                            </Button>
+                        </form>
+                    </Form>
+                </DialogContent>
+            </Dialog>
+            <Dialog open={updateUserDialogOpen} onOpenChange={setUpdateUserDialogOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Kullanıcı Ekle</DialogTitle>
+                        <DialogDescription>
+                            Kullanıcı adını düzenleyip kaydet butonuna tıklayın.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <Form {...formUpdate}>
+                        <form onSubmit={formUpdate.handleSubmit(handleUpdateUser)} className="space-y-6" autoComplete="off">
+                            <FormField
+                                control={formUpdate.control}
+                                name="first_name"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Ad</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Ad" {...field} disabled={isLoading} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={formUpdate.control}
+                                name="last_name"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Soyad</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Soyad" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={formUpdate.control}
+                                name="gsm"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>GSM</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="GSM" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={formUpdate.control}
+                                name="is_active"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Aktif</FormLabel>
+                                        <FormControl>
+                                            <Checkbox
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={formUpdate.control}
+                                name="group_id"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Grup</FormLabel>
+                                        <Select
+                                            disabled={isLoading}
+                                            onValueChange={field.onChange}
+                                            defaultValue={field.value}
                                         >
                                             <FormControl>
                                                 <SelectTrigger>

@@ -9,6 +9,7 @@ export const ENDPOINTS = {
   // Users endpoints
   GET_USERS: '/users/users/',
   CREATE_USER: '/users/users/',
+  UPDATE_USER: (id) => `/users/users/${id}/`,
   DELETE_USER: (id) => `/users/users/${id}/`,
   // Organization endpoints
   COUNTRIES: '/organization/countries/',
@@ -27,6 +28,8 @@ export const ENDPOINTS = {
   // Roles endpoints
   GET_ROLES: '/organization/roles/',
   CREATE_ROLE: '/organization/roles/',
+  UPDATE_ROLE: (id) => `/organization/roles/${id}/`,
+  DELETE_ROLE: (id) => `/organization/roles/${id}/`,
 };
 
 // API istekleri için varsayılan ayarlar

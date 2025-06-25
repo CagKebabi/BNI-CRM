@@ -77,6 +77,8 @@ function Groups() {
     const [rolesDialogOpen, setRolesDialogOpen] = useState(false);
     const [addRolesDialogOpen, setAddRolesDialogOpen] = useState(false);
     const [selectedGroup, setSelectedGroup] = useState(null);
+    const [selectedRole, setSelectedRole] = useState(null);
+    const [editingRoleId, setEditingRoleId] = useState(null);
     
     const formSchema = z.object({
         name: z.string().min(2, {
@@ -110,9 +112,18 @@ function Groups() {
             message: "Rol adı en az 2 karakter olmalıdır.",
         }),
         category: z.string().min(2, {
-            message: "Rol kategorisi en az 2 karakter olmalıdır.",
+            message: "Rol kategorisi seçiniz.",
         }),
     })
+    
+    // Sabit rol kategorileri
+    const roleCategories = [
+        "Lider Ekip", 
+        "Mentör Komitesi", 
+        "Üyelik Komitesi", 
+        "Ziyaretçi Komitesi", 
+        "Diğer"
+    ];
     
     // Add Group Form tanımlaması
     const form = useForm({
@@ -152,6 +163,15 @@ function Groups() {
             category: "",
         },
     }); 
+    
+    // Edit Role Form tanımlaması
+    const editRoleForm = useForm({
+        resolver: zodResolver(formSchema2),
+        defaultValues: {
+            name: "",
+            category: "",
+        },
+    });
     
     useEffect(() => {
         fetchGroups();
@@ -269,6 +289,25 @@ function Groups() {
     };
 
     // Roles
+    const handleUpdateRoleClick = (role) => {
+        setSelectedRole(role);
+        // Form değerlerini güncelle
+        console.log('Selected role:', role);
+        
+        // Düzenleme modunu aç/kapa
+        if (editingRoleId === role.id) {
+            setEditingRoleId(null);
+        } else {
+            setEditingRoleId(role.id);
+            // Form değerlerini sıfırla ve yeni değerleri ata
+            editRoleForm.reset();
+            
+            // Her bir form alanını ayrı ayrı güncelle
+            editRoleForm.setValue('name', role.name);
+            editRoleForm.setValue('category', role.category);
+        }
+    };
+
     const handleAddRole = async (data) => {
         setIsLoading(true);
         try {
@@ -283,6 +322,40 @@ function Groups() {
         } catch (error) {
             console.error('Error adding role:', error);
             toast.error('Rol ekleme hatası');
+        } finally {
+            setIsLoading(false);
+            addRoleForm.reset();
+        }
+    };
+
+    const handleUpdateRole = async (data) => {
+        setIsLoading(true);
+        try {
+            if (!data.name.trim()) return;
+            
+            await rolesService.updateRole(selectedRole.id, data);
+            toast.success('Rol başarıyla güncellendi');
+            setIsLoading(false);
+            setEditingRoleId(null); // Düzenleme modunu kapat
+            fetchRoles(); // Refresh the list
+        } catch (error) {
+            console.error('Error updating role:', error);
+            toast.error('Rol güncelleme hatası');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleDeleteRole = async (id) => {
+        setIsLoading(true);
+        try {
+            await rolesService.deleteRole(id);
+            toast.success('Rol başarıyla silindi');
+            setIsLoading(false);
+            fetchRoles(); // Refresh the list
+        } catch (error) {
+            console.error('Error deleting role:', error);
+            toast.error('Rol silme hatası');
         } finally {
             setIsLoading(false);
         }
@@ -1080,14 +1153,97 @@ function Groups() {
                                             <CardTitle className="text-lg font-medium">{category}</CardTitle>
                                         </CardHeader>
                                         <CardContent>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            <div className="grid grid-cols-1 md:grid-cols-1 gap-3">
                                                 {groupedRoles[category].map((role) => (
-                                                    <div 
-                                                        key={role.id} 
-                                                        className="flex items-center p-3 rounded-md border bg-card hover:bg-accent/10 transition-colors"
-                                                    >
-                                                        <User className="h-4 w-4 mr-2 text-primary" />
-                                                        <span>{role.name}</span>
+                                                    <div key={role.id} className="rounded-md border bg-card hover:bg-accent/10 transition-colors">
+                                                        <div className="flex items-center p-3 justify-between">
+                                                            <div className='flex items-center'>
+                                                                <User className="h-4 w-4 mr-2 text-primary" />
+                                                                <span>{role.name}</span>
+                                                            </div>
+                                                            <div>
+                                                                <DropdownMenu>
+                                                                    <DropdownMenuTrigger>
+                                                                        <Button variant="ghost" className="h-8 w-8 p-0">
+                                                                            <span className="sr-only">Open menu</span>
+                                                                            <MoreHorizontal className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </DropdownMenuTrigger>
+                                                                    <DropdownMenuContent align="end">
+                                                                        <DropdownMenuItem onClick={() => handleUpdateRoleClick(role)} variant="default" className="cursor-pointer">
+                                                                            <Edit className="mr-2 h-4 w-4" />
+                                                                            Düzenle
+                                                                        </DropdownMenuItem>
+                                                                        <DropdownMenuItem onClick={() => handleDeleteRole(role.id)} variant="destructive" className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
+                                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                                            Sil
+                                                                        </DropdownMenuItem>
+                                                                    </DropdownMenuContent>
+                                                                </DropdownMenu>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        {/* Düzenleme formu - sadece düzenleme modunda göster */}
+                                                        {editingRoleId === role.id && (
+                                                            <div className="p-3 pt-0 border-t border-gray-100">
+                                                                <Form {...editRoleForm}>
+                                                                    <form onSubmit={editRoleForm.handleSubmit(handleUpdateRole)} className="space-y-4">
+                                                                        <FormField
+                                                                            control={editRoleForm.control}
+                                                                            name="name"
+                                                                            render={({ field }) => (
+                                                                                <FormItem>
+                                                                                    <FormLabel>Rol</FormLabel>
+                                                                                    <FormControl>
+                                                                                        <Input placeholder="Rol adı" {...field} />
+                                                                                    </FormControl>
+                                                                                    <FormMessage />
+                                                                                </FormItem>
+                                                                            )}
+                                                                        />
+                                                                        <FormField
+                                                                            control={editRoleForm.control}
+                                                                            name="category"
+                                                                            render={({ field }) => (
+                                                                                <FormItem>
+                                                                                    <FormLabel>Kategori</FormLabel>
+                                                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                                                        <FormControl>
+                                                                                            <SelectTrigger>
+                                                                                                <SelectValue placeholder="Kategori seçiniz" />
+                                                                                            </SelectTrigger>
+                                                                                        </FormControl>
+                                                                                        <SelectContent>
+                                                                                            {roleCategories.map((category) => (
+                                                                                                <SelectItem key={category} value={category}>
+                                                                                                    {category}
+                                                                                                </SelectItem>
+                                                                                            ))}
+                                                                                        </SelectContent>
+                                                                                    </Select>
+                                                                                    <FormMessage />
+                                                                                </FormItem>
+                                                                            )}
+                                                                        />
+                                                                        <div className="flex justify-end gap-2">
+                                                                            <Button 
+                                                                                type="button" 
+                                                                                variant="outline" 
+                                                                                onClick={() => setEditingRoleId(null)}
+                                                                            >
+                                                                                İptal
+                                                                            </Button>
+                                                                            <Button 
+                                                                                type="submit" 
+                                                                                disabled={isLoading}
+                                                                            >
+                                                                                {isLoading ? "Kaydediliyor..." : "Kaydet"}
+                                                                            </Button>
+                                                                        </div>
+                                                                    </form>
+                                                                </Form>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>
@@ -1106,9 +1262,9 @@ function Groups() {
             <Dialog open={addRolesDialogOpen} onOpenChange={setAddRolesDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Roller</DialogTitle>
+                        <DialogTitle>Rol Ekle</DialogTitle>
                         <DialogDescription>
-                            Roller listesini görüntüleyin ve yönetin
+                            Yeni bir rol ekleyin
                         </DialogDescription>
                     </DialogHeader>
                     <Form {...addRoleForm}>
@@ -1120,7 +1276,7 @@ function Groups() {
                                     <FormItem>
                                         <FormLabel>Rol</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Grup adı" {...field} />
+                                            <Input placeholder="Rol adı" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -1132,9 +1288,20 @@ function Groups() {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Kategori</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Grup adı" {...field} />
-                                        </FormControl>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Kategori seçiniz" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {roleCategories.map((category) => (
+                                                    <SelectItem key={category} value={category}>
+                                                        {category}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                         <FormMessage />
                                     </FormItem>
                                 )}

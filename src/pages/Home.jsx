@@ -40,12 +40,7 @@ function Home() {
 
   return (
     <div className="container ">
-      <div className="flex items-center gap-2 mb-6">
-        <HomeIcon className="h-6 w-6 text-primary" />
-        <h1 className="text-3xl font-bold">Ana Sayfa</h1>
-      </div>
-
-      <div className="mt-12 p-6 rounded-lg border border-gray-200">
+      <div className="p-6 rounded-lg border border-gray-200">
         <h2 className="text-2xl font-semibold mb-4">Hoş Geldiniz</h2>
         <p className="text-muted-foreground">BNI hesabınıza hoş geldiniz. Aşağıdaki kartları kullanarak sisteme hızlı erişim sağlayabilirsiniz.</p>
       </div>

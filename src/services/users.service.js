@@ -23,6 +23,16 @@ class UsersService {
             throw error;
         }
     }
+    async updateUser(id, data) {
+        try {
+            const response = await apiService.patch(ENDPOINTS.UPDATE_USER(id), data);
+            console.log("User updated:", response);
+            return response;
+        } catch (error) {
+            console.log("Error updating user:", error);
+            throw error;
+        }
+    }
     async deleteUser(userId) {
         try {
             const response = await apiService.delete(`${ENDPOINTS.DELETE_USER(userId)}`);
