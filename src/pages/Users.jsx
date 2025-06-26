@@ -76,9 +76,9 @@ const formSchema = z.object({
     gsm: z.string().min(10, {
         message: "GSM en az 10 karakter olmalıdır.",
     }),
-    group_id: z.string().uuid({
-        message: "Geçerli bir grup seçiniz.",
-    }),
+    // group_id: z.string().uuid({
+    //     message: "Geçerli bir grup seçiniz.",
+    // }).optional(),
 }).refine((data) => data.password === data.password2, {
     message: "Şifreler eşleşmiyor.",
     path: ["password2"],
@@ -95,9 +95,9 @@ const formSchemaUserUpdate = z.object({
         message: "GSM en az 10 karakter olmalıdır.",
     }),
     is_active: z.boolean(),
-    group_id: z.string().uuid({
-        message: "Geçerli bir grup seçiniz.",
-    }),
+    // group_id: z.string().uuid({
+    //     message: "Geçerli bir grup seçiniz.",
+    // }).optional(),
 });
 
 const Users = () => {
@@ -198,21 +198,6 @@ const Users = () => {
         fetchUsers();
         fetchGroups();
     }, []);
-
-    // Dialog açıldığında/kapandığında form değerlerini sıfırla
-    useEffect(() => {
-        if (!addUserDialogOpen) {
-            form.reset({
-                email: "",
-                password: "",
-                password2: "",
-                first_name: "",
-                last_name: "",
-                gsm: "",
-                group_id: "",
-            });
-        }
-    }, [addUserDialogOpen]);
 
     const columns = [
         {
@@ -346,9 +331,14 @@ const Users = () => {
 
     const handleUpdateUser = async (data) => {
         setIsLoading(true);
-        console.log('Güncellenecek kullanıcı:', data);
+        // group_id null olarak gönderildiğinden emin olalım
+        const updatedData = {
+            ...data,
+            group_id: data.group_id === "null" || data.group_id === undefined ? null : data.group_id
+        };
+        console.log('Güncellenecek kullanıcı:', updatedData);
         try {
-            await usersService.updateUser(selectedUser.id, data);
+            await usersService.updateUser(selectedUser.id, updatedData);
             toast.success('Kullanıcı başarıyla güncellendi');
             fetchUsers(); // Listeyi yenile
         } catch (error) {
@@ -629,7 +619,7 @@ const Users = () => {
             <Dialog open={updateUserDialogOpen} onOpenChange={setUpdateUserDialogOpen}>
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                        <DialogTitle>Kullanıcı Ekle</DialogTitle>
+                        <DialogTitle>Kullanıcı Düzenle</DialogTitle>
                         <DialogDescription>
                             Kullanıcı adını düzenleyip kaydet butonuna tıklayın.
                         </DialogDescription>
@@ -710,9 +700,10 @@ const Users = () => {
                                             <SelectContent>
                                                 {groups.map((group) => (
                                                     <SelectItem key={group.id} value={group.id}>
-                                                        {group.name}
+                                                        {group.name} 
                                                     </SelectItem>
                                                 ))}
+                                                <SelectItem value="null">Grup Yok</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />

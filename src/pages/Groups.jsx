@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { groupsService } from '../services/groups.service';
 import { regionsService } from '../services/regions.service';
 import { rolesService } from '../services/roles.service';
+import { groupMembersService } from '../services/groupMembers.service';
+import { usersService } from '../services/users.service';
 import * as z from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '../components/ui/button';
@@ -71,11 +73,14 @@ function Groups() {
     const [groups, setGroups] = useState([]);
     const [regions, setRegions] = useState([]);
     const [roles, setRoles] = useState([]);
+    const [users, setUsers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [addGroupDialogOpen, setAddGroupDialogOpen] = useState(false);
     const [updateGroupDialogOpen, setUpdateGroupDialogOpen] = useState(false);
     const [rolesDialogOpen, setRolesDialogOpen] = useState(false);
     const [addRolesDialogOpen, setAddRolesDialogOpen] = useState(false);
+    const [addGroupMemberDialogOpen, setAddGroupMemberDialogOpen] = useState(false);
+    const [updateGroupMemberDialogOpen, setUpdateGroupMemberDialogOpen] = useState(false);
     const [selectedGroup, setSelectedGroup] = useState(null);
     const [selectedRole, setSelectedRole] = useState(null);
     const [editingRoleId, setEditingRoleId] = useState(null);
@@ -113,6 +118,15 @@ function Groups() {
         }),
         category: z.string().min(2, {
             message: "Rol kategorisi seçiniz.",
+        }),
+    })
+
+    const formSchema3 = z.object({
+        user_id: z.string().uuid({
+            message: "Kullanıcı seçiniz.",
+        }),
+        role_id: z.string().uuid({
+            message: "Rol seçiniz.",
         }),
     })
     
@@ -172,11 +186,21 @@ function Groups() {
             category: "",
         },
     });
+
+    // Add Group Members Form tanımlaması
+    const addGroupMembersForm = useForm({
+        resolver: zodResolver(formSchema3),
+        defaultValues: {
+            user_id: "",
+            role_id: "",
+        },
+    });
     
     useEffect(() => {
         fetchGroups();
         fetchRegions();
         fetchRoles();
+        fetchUsers();
     }, []);
     
     const fetchGroups = async () => {
@@ -215,6 +239,18 @@ function Groups() {
         }
     };
 
+    const fetchUsers = async () => {
+        try {
+            const response = await usersService.getUsers();
+            console.log("Kullanıcı listesi alındı:", response);
+            setUsers(response);
+            setIsLoading(false);
+        } catch (error) {
+            console.error("Kullanıcı listesi alınamadı:", error);
+            setIsLoading(false);
+        }
+    };
+    
     // Groups
     const handleUpdateClick = (group) => {
         setSelectedGroup(group);
@@ -361,6 +397,40 @@ function Groups() {
         }
     };
 
+    // Group Members
+    const addMemberToGroupClick = (group) => {
+        setSelectedGroup(group);
+        console.log(group);
+        setAddGroupMemberDialogOpen(true);
+    };
+    
+    // Grup üyesi düzenleme işlevi
+    const [editMemberDialogOpen, setEditMemberDialogOpen] = useState(false);
+    const [selectedMember, setSelectedMember] = useState(null);
+    
+    const handleEditMemberClick = (group, user) => {
+        setSelectedGroup(group);
+        setSelectedMember(user);
+        setEditMemberDialogOpen(true);
+    };
+    
+    const handleAddGroupMember = async (data) => {
+        setIsLoading(true);
+        try {
+            if (!data.user_id.trim() || !data.role_id.trim()) return;
+            console.log(data);
+            await groupMembersService.addMemberToGroup(selectedGroup.id, data);
+            toast.success('Grup üyesi başarıyla eklendi');
+            setIsLoading(false);
+            fetchGroups(); // Refresh the list
+        } catch (error) {
+            console.error('Error adding group member:', error);
+            toast.error('Grup üyesi ekleme hatası - Üye başka bir gruba ait olabilir');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <>
             <div className="max-w-4xl p-6">
@@ -474,34 +544,55 @@ function Groups() {
                                             </div>
                                             {/* Üyeler */}
                                             <div className="pt-4 border-t border-gray-100">
-                                                <div className="flex items-center gap-2 mb-4">
-                                                    <div className="p-1.5 rounded-md bg-indigo-50">
-                                                        <User className="h-4 w-4 text-indigo-600" />
+                                                <div className="flex items-center justify-between gap-2  mb-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="p-1.5 rounded-md bg-indigo-50">
+                                                            <User className="h-4 w-4 text-indigo-600" />
+                                                        </div>
+                                                        <span className="font-medium text-sm">
+                                                            Grup Üyeleri ({group.users.length})
+                                                        </span>
                                                     </div>
-                                                    <span className="font-medium text-sm">
-                                                        Grup Üyeleri ({group.users.length})
-                                                    </span>
+                                                    <Button variant="default" size="icon" onClick={() => addMemberToGroupClick(group)}>
+                                                        <Plus className="h-5 w-5" />
+                                                    </Button>
                                                 </div>
                                                 
-                                                <div className="flex flex-wrap gap-2">
+                                                
+                                                <div className="grid grid-cols-1 gap-3">
                                                     {group.users.map((user, index) => (
-                                                        <Tooltip key={user.id}>
-                                                            <TooltipTrigger>
-                                                                <div
-                                                                    className="flex items-center gap-2 bg-indigo-50 hover:bg-indigo-100 transition-colors text-indigo-700 px-2 py-1.5 rounded-full text-xs"
-                                                                >
-                                                                    <div className="w-5 h-5 bg-indigo-200 rounded-full flex items-center justify-center text-xs font-medium">
+                                                        <div key={user.id} className="bg-white border border-gray-100 rounded-lg shadow-sm p-3 hover:shadow-md transition-all">
+                                                            <div className="flex justify-between items-start">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-10 h-10 bg-indigo-200 rounded-full flex items-center justify-center text-sm font-medium text-indigo-700">
                                                                         {user.first_name.charAt(0).toUpperCase() + user.last_name.charAt(0).toUpperCase()}
                                                                     </div>
-                                                                    <span className="max-w-[100px] truncate font-medium">
-                                                                        {user.first_name} {user.last_name}
-                                                                    </span>
+                                                                    <div>
+                                                                        <h4 className="font-medium text-gray-900">{user.first_name} {user.last_name}</h4>
+                                                                        <p className="text-sm text-gray-500">{user.email}</p>
+                                                                    </div>
                                                                 </div>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>
-                                                                <p className="text-sm font-medium">{user.first_name} {user.last_name}</p>
-                                                            </TooltipContent>
-                                                        </Tooltip>
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                                    <Plus className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+                                                            
+                                                            {user.roles.length > 0 && (
+                                                                <div className="mt-3 pt-3 border-t border-gray-100">
+                                                                    <p className="text-xs font-medium text-gray-500 mb-2">Roller</p>
+                                                                    <div className="flex flex-wrap gap-2">
+                                                                        {user.roles.map((role, index) => (
+                                                                            <div key={role.id} className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs flex items-center gap-1">
+                                                                                <span className="font-medium">{role.role}</span>
+                                                                                {role.category && (
+                                                                                    <span className="text-indigo-500 bg-indigo-100 px-1.5 py-0.5 rounded-full text-[10px]">{role.category}</span>
+                                                                                )}
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     ))}
                                                 </div>
                                             </div>
@@ -1320,6 +1411,79 @@ function Groups() {
                         </form>
                     </Form>
                 </DialogContent>
+            </Dialog>
+            <Dialog open={addGroupMemberDialogOpen} onOpenChange={setAddGroupMemberDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Rol Ekle</DialogTitle>
+                        <DialogDescription>
+                            Yeni bir rol ekleyin
+                        </DialogDescription>
+                    </DialogHeader>
+                    <Form {...addGroupMembersForm}>
+                        <form onSubmit={addGroupMembersForm.handleSubmit(handleAddGroupMember)} className="space-y-4">
+                            <FormField
+                                control={addGroupMembersForm.control}
+                                name="user_id"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Kullanıcı</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Kullanıcı seçiniz" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {users.map((user) => (
+                                                    <SelectItem key={user.id} value={user.id}>
+                                                        {user.first_name + " " + user.last_name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={addGroupMembersForm.control}
+                                name="role_id"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Rol</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Rol seçiniz" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {roles.map((role) => (
+                                                    <SelectItem key={role.id} value={role.id}>
+                                                        {role.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <DialogFooter>
+                                <Button 
+                                //onClick={handleSaveEdit} 
+                                disabled={isLoading}
+                                >
+                                    {isLoading ? "Kaydediliyor..." : "Kaydet"}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </Form>
+                </DialogContent>
+            </Dialog>
+            <Dialog open={updateGroupMemberDialogOpen} onOpenChange={setUpdateGroupMemberDialogOpen}>
+                
             </Dialog>
         </>
     )
