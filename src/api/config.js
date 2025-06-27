@@ -32,6 +32,7 @@ export const ENDPOINTS = {
   DELETE_ROLE: (id) => `/organization/roles/${id}/`,
   // Group Members endpoints
   ADD_MEMBER_TO_GROUP: (groupId) => `/organization/groups/${groupId}/add-member/`,
+  UPDATE_GROUP_MEMBER: (id) => `/organization/groups/${id}/update-member-role/`,
 };
 
 // API istekleri için varsayılan ayarlar

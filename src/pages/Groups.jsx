@@ -83,6 +83,7 @@ function Groups() {
     const [updateGroupMemberDialogOpen, setUpdateGroupMemberDialogOpen] = useState(false);
     const [selectedGroup, setSelectedGroup] = useState(null);
     const [selectedRole, setSelectedRole] = useState(null);
+    const [selectedGroupMember, setSelectedGroupMember] = useState(null);
     const [editingRoleId, setEditingRoleId] = useState(null);
     
     const formSchema = z.object({
@@ -127,6 +128,18 @@ function Groups() {
         }),
         role_id: z.string().uuid({
             message: "Rol seçiniz.",
+        }),
+    })
+
+    const formSchema4 = z.object({
+        user_id: z.string().uuid({
+            message: "Kullanıcı seçiniz.",
+        }),
+        old_role_id: z.string().uuid({
+            message: "Eski rol seçiniz.",
+        }),
+        new_role_id: z.string().uuid({
+            message: "Yeni rol seçiniz.",
         }),
     })
     
@@ -193,6 +206,16 @@ function Groups() {
         defaultValues: {
             user_id: "",
             role_id: "",
+        },
+    });
+    
+    // Update Group Members Form tanımlaması
+    const updateGroupMemberForm = useForm({
+        resolver: zodResolver(formSchema4),
+        defaultValues: {
+            user_id: "",
+            old_role_id: "",
+            new_role_id: "",
         },
     });
     
@@ -288,6 +311,7 @@ function Groups() {
             toast.error('Grup ekleme hatası');
         } finally {
             setIsLoading(false);
+            form.reset();
         }
     };
 
@@ -404,16 +428,6 @@ function Groups() {
         setAddGroupMemberDialogOpen(true);
     };
     
-    // Grup üyesi düzenleme işlevi
-    const [editMemberDialogOpen, setEditMemberDialogOpen] = useState(false);
-    const [selectedMember, setSelectedMember] = useState(null);
-    
-    const handleEditMemberClick = (group, user) => {
-        setSelectedGroup(group);
-        setSelectedMember(user);
-        setEditMemberDialogOpen(true);
-    };
-    
     const handleAddGroupMember = async (data) => {
         setIsLoading(true);
         try {
@@ -428,6 +442,39 @@ function Groups() {
             toast.error('Grup üyesi ekleme hatası - Üye başka bir gruba ait olabilir');
         } finally {
             setIsLoading(false);
+            setAddGroupMemberDialogOpen(false);
+            addGroupMembersForm.reset();
+        }
+    };
+
+    const updateGroupMemberClick = (group, user) => {
+        setSelectedGroup(group);
+        setSelectedGroupMember(user);
+        console.log(group, user);
+        setUpdateGroupMemberDialogOpen(true);
+        updateGroupMemberForm.reset({
+            user_id: user.user_id,
+            old_role_id: user.role_id,
+            new_role_id: user.role_id,
+        });
+    };
+
+    const handleUpdateGroupMember = async (data) => {
+        setIsLoading(true);
+        try {
+            if (!data.user_id.trim() || !data.role_id.trim()) return;
+            console.log(data);
+            await groupMembersService.updateGroupMember(selectedGroupMember.id, data);
+            toast.success('Grup üyesi başarıyla güncellendi');
+            setIsLoading(false);
+            fetchGroups(); // Refresh the list
+        } catch (error) {
+            console.error('Error updating group member:', error);
+            toast.error('Grup üyesi güncellenemedi');
+        } finally {
+            setIsLoading(false);
+            setUpdateGroupMemberDialogOpen(false);
+            updateGroupMemberForm.reset();
         }
     };
 
@@ -553,8 +600,14 @@ function Groups() {
                                                             Grup Üyeleri ({group.users.length})
                                                         </span>
                                                     </div>
-                                                    <Button variant="default" size="icon" onClick={() => addMemberToGroupClick(group)}>
-                                                        <Plus className="h-5 w-5" />
+                                                    <Button variant="default" onClick={() => addMemberToGroupClick(group)} className="bg-secondary text-primary border-2 hover:bg-primary hover:text-secondary">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="flex items-center gap-1">
+                                                                <User className="h-5 w-5" />
+                                                                <span>Üye Ekle</span>
+                                                            </div>
+                                                            <Plus className="h-5 w-5" />
+                                                        </div>
                                                     </Button>
                                                 </div>
                                                 
@@ -572,8 +625,11 @@ function Groups() {
                                                                         <p className="text-sm text-gray-500">{user.email}</p>
                                                                     </div>
                                                                 </div>
-                                                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                                    <Plus className="h-4 w-4" />
+                                                                <Button variant="ghost" className="bg-secondary text-primary border-2 hover:bg-primary hover:text-secondary" onClick={() => updateGroupMemberClick(group, user)}>
+                                                                    <div className="flex items-center gap-2"> 
+                                                                        <span>Rol Ekle</span>
+                                                                        <Plus className="h-3 w-3" />
+                                                                    </div>
                                                                 </Button>
                                                             </div>
                                                             
@@ -1483,7 +1539,48 @@ function Groups() {
                 </DialogContent>
             </Dialog>
             <Dialog open={updateGroupMemberDialogOpen} onOpenChange={setUpdateGroupMemberDialogOpen}>
-                
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Grup Üyesi Düzenle</DialogTitle>
+                        <DialogDescription>
+                            Grup üyesini düzenleyin.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <Form {...updateGroupMemberForm}>
+                        <form onSubmit={updateGroupMemberForm.handleSubmit(handleUpdateGroupMember)} className="space-y-4">
+                            <FormField
+                                control={updateGroupMemberForm.control}
+                                name="role_id"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Rol</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Rol Seçiniz" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {roles.map((role) => (
+                                                    <SelectItem key={role.id} value={role.id}>
+                                                        {role.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <DialogFooter>
+                                <Button 
+                                //onClick={handleSaveEdit} 
+                                disabled={isLoading}
+                                >
+                                    {isLoading ? "Kaydediliyor..." : "Kaydet"}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </Form>
+                </DialogContent>
             </Dialog>
         </>
     )

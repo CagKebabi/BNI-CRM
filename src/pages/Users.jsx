@@ -64,6 +64,7 @@ const formSchema = z.object({
     }),
     password: z.string()
         .min(8, { message: "Şifre en az 8 karakter olmalıdır." })
+        .regex(/[a-z]/, { message: "Şifre en az bir küçük harf içermelidir." })
         .regex(/[A-Z]/, { message: "Şifre en az bir büyük harf içermelidir." })
         .regex(/[0-9]/, { message: "Şifre en az bir rakam içermelidir." }),
     password2: z.string(),
@@ -76,9 +77,12 @@ const formSchema = z.object({
     gsm: z.string().min(10, {
         message: "GSM en az 10 karakter olmalıdır.",
     }),
-    // group_id: z.string().uuid({
-    //     message: "Geçerli bir grup seçiniz.",
-    // }).optional(),
+    group_id: z.union([
+        z.string().uuid({
+            message: "Geçerli bir grup seçiniz.",
+        }),
+        z.literal("Not selected")
+    ]),
 }).refine((data) => data.password === data.password2, {
     message: "Şifreler eşleşmiyor.",
     path: ["password2"],
@@ -95,9 +99,12 @@ const formSchemaUserUpdate = z.object({
         message: "GSM en az 10 karakter olmalıdır.",
     }),
     is_active: z.boolean(),
-    // group_id: z.string().uuid({
-    //     message: "Geçerli bir grup seçiniz.",
-    // }).optional(),
+    group_id: z.union([
+        z.string().uuid({
+            message: "Geçerli bir grup seçiniz.",
+        }),
+        z.literal("Not selected")
+    ]),
 });
 
 const Users = () => {
@@ -285,10 +292,14 @@ const Users = () => {
     // Form gönderme işlemi
     const handleAddUser = async (data) => {
         setIsLoading(true);
+        const updatedData = {
+            ...data,
+            group_id: data.group_id === null || data.group_id === "Not selected" || data.group_id === undefined ? null : data.group_id
+        };
         try {
-            console.log('Form değerleri:', data);
+            console.log('Form değerleri:', updatedData);
             const response = await usersService.createUser(
-                data
+                updatedData
             );
             console.log('Kullanıcı oluşturuldu:', response);
             fetchUsers();
@@ -324,7 +335,7 @@ const Users = () => {
         formUpdate.setValue('last_name', user.last_name);
         formUpdate.setValue('gsm', user.gsm);
         formUpdate.setValue('is_active', user.is_active);
-        formUpdate.setValue('group_id', user.group);
+        formUpdate.setValue('group_id', user.group === null ? "Not selected" : user.group);
         
         setUpdateUserDialogOpen(true);
     };
@@ -334,7 +345,7 @@ const Users = () => {
         // group_id null olarak gönderildiğinden emin olalım
         const updatedData = {
             ...data,
-            group_id: data.group_id === "null" || data.group_id === undefined ? null : data.group_id
+            group_id: data.group_id === null || data.group_id === "Not selected" || data.group_id === undefined ? null : data.group_id
         };
         console.log('Güncellenecek kullanıcı:', updatedData);
         try {
@@ -602,6 +613,7 @@ const Users = () => {
                                                         {group.name}
                                                     </SelectItem>
                                                 ))}
+                                                <SelectItem value="Not selected">Grup Yok</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
@@ -703,7 +715,7 @@ const Users = () => {
                                                         {group.name} 
                                                     </SelectItem>
                                                 ))}
-                                                <SelectItem value="null">Grup Yok</SelectItem>
+                                                <SelectItem value="Not selected">Grup Yok</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
