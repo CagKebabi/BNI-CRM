@@ -454,8 +454,8 @@ function Groups() {
         setUpdateGroupMemberDialogOpen(true);
         updateGroupMemberForm.reset({
             user_id: user.user_id,
-            old_role_id: user.role_id,
-            new_role_id: user.role_id,
+            old_role_name: user.role_name,
+            new_role_name: user.role_name,
         });
     };
 
@@ -614,21 +614,20 @@ function Groups() {
                                                 
                                                 <div className="grid grid-cols-1 gap-3">
                                                     {group.users.map((user, index) => (
-                                                        <div key={user.id} className="bg-white border border-gray-100 rounded-lg shadow-sm p-3 hover:shadow-md transition-all">
+                                                        <div key={user.id} className="bg-secondary border border-gray-100 rounded-lg shadow-sm p-3 hover:shadow-md transition-all">
                                                             <div className="flex justify-between items-start">
                                                                 <div className="flex items-center gap-3">
                                                                     <div className="w-10 h-10 bg-indigo-200 rounded-full flex items-center justify-center text-sm font-medium text-indigo-700">
                                                                         {user.first_name.charAt(0).toUpperCase() + user.last_name.charAt(0).toUpperCase()}
                                                                     </div>
                                                                     <div>
-                                                                        <h4 className="font-medium text-gray-900">{user.first_name} {user.last_name}</h4>
+                                                                        <h4 className="font-medium text-primary">{user.first_name} {user.last_name}</h4>
                                                                         <p className="text-sm text-gray-500">{user.email}</p>
                                                                     </div>
                                                                 </div>
                                                                 <Button variant="ghost" className="bg-secondary text-primary border-2 hover:bg-primary hover:text-secondary" onClick={() => updateGroupMemberClick(group, user)}>
-                                                                    <div className="flex items-center gap-2"> 
-                                                                        <span>Rol Ekle</span>
-                                                                        <Plus className="h-3 w-3" />
+                                                                    <div className="flex items-center"> 
+                                                                        <Edit className="h-2 w-2" />
                                                                     </div>
                                                                 </Button>
                                                             </div>
@@ -1543,7 +1542,7 @@ function Groups() {
                     <DialogHeader>
                         <DialogTitle>Grup Üyesi Düzenle</DialogTitle>
                         <DialogDescription>
-                            Grup üyesini düzenleyin.
+                            Grup üyesinin rollerini düzenleyin.
                         </DialogDescription>
                     </DialogHeader>
                     <Form {...updateGroupMemberForm}>
