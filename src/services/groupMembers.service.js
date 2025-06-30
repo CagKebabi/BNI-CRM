@@ -23,6 +23,19 @@ class GroupMembersService {
             throw error;
         }
     }
+    async deleteGroupMemberRole(id, data) {
+        console.log("endpoint: ", ENDPOINTS.DELETE_MEMBER_ROLE(id));
+        console.log("data: ", data);
+        
+        try {
+            const response = await apiService.deleteWithData(ENDPOINTS.DELETE_MEMBER_ROLE(id), data);
+            console.log("Grup üyesi rolü silindi:", response);
+            return response;
+        } catch (error) {
+            console.error("Grup üyesi rolü silinemedi:", error);
+            throw error;
+        }
+    }
 }
 
 export const groupMembersService = new GroupMembersService();

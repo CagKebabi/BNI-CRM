@@ -55,7 +55,16 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { se } from 'date-fns/locale/se';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 // Form doğrulama şeması
 const formSchema = z.object({
@@ -113,6 +122,7 @@ const Users = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
     const [updateUserDialogOpen, setUpdateUserDialogOpen] = useState(false);
+    const [deleteUserDialogOpen, setDeleteUserDialogOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const [sorting, setSorting] = useState([]);
     const [columnFilters, setColumnFilters] = useState([]);
@@ -261,7 +271,7 @@ const Users = () => {
                                 <Edit className="mr-2 h-4 w-4" />
                                 <span>Düzenle</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDeleteUser(row.original.id)} variant="destructive" className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
+                            <DropdownMenuItem onClick={() => handleDeleteUserClick(row.original)} variant="destructive" className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 <span>Sil</span>
                             </DropdownMenuItem>
@@ -368,6 +378,11 @@ const Users = () => {
                 group_id: "",
             });
         }
+    };
+
+    const handleDeleteUserClick = (user) => {
+        setSelectedUser(user);
+        setDeleteUserDialogOpen(true);
     };
 
     const handleDeleteUser = async (userId) => {
@@ -620,10 +635,11 @@ const Users = () => {
                                     </FormItem>
                                 )}
                             />
-                    
-                            <Button type="submit" disabled={isLoading}>
-                                {isLoading ? "Kaydediliyor..." : "Kaydet"}
-                            </Button>
+                            <DialogFooter>
+                                <Button type="submit" disabled={isLoading}>
+                                    {isLoading ? "Kaydediliyor..." : "Kaydet"}
+                                </Button>
+                            </DialogFooter>
                         </form>
                     </Form>
                 </DialogContent>
@@ -722,14 +738,29 @@ const Users = () => {
                                     </FormItem>
                                 )}
                             />
-                    
-                            <Button type="submit" disabled={isLoading}>
-                                {isLoading ? "Kaydediliyor..." : "Kaydet"}
-                            </Button>
+                            <DialogFooter>
+                                <Button type="submit" disabled={isLoading}>
+                                    {isLoading ? "Kaydediliyor..." : "Kaydet"}
+                                </Button>
+                            </DialogFooter>
                         </form>
                     </Form>
                 </DialogContent>
             </Dialog>
+            <AlertDialog open={deleteUserDialogOpen} onOpenChange={setDeleteUserDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Kullanıcıyı silmek istediğinize emin misiniz?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Bu işlem geri alınamaz.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>İptal</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDeleteUser(selectedUser.id)}>Onayla</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </>
     );
 };

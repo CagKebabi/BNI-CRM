@@ -31,6 +31,16 @@ import {
     FormLabel,
     FormMessage,
 } from "../components/ui/form";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 const Countries = () => {
     const [countries, setCountries] = useState([]);
@@ -39,6 +49,8 @@ const Countries = () => {
     const [currentCountry, setCurrentCountry] = useState(null);
     const [editCountryName, setEditCountryName] = useState('');
     const [addCountryDialogOpen, setAddCountryDialogOpen] = useState(false);
+    const [deleteCountryDialogOpen, setDeleteCountryDialogOpen] = useState(false);
+    const [selectedCountry, setSelectedCountry] = useState(null);
     
     // Form doğrulama şeması
     const formSchema = z.object({
@@ -79,12 +91,17 @@ const Countries = () => {
             setIsLoading(false);
         }
     };
+
+    const handleDeleteCountryClick = (country) => {
+        setSelectedCountry(country);
+        setDeleteCountryDialogOpen(true);
+    };
     
-    const handleDeleteCountry = async(countryId) => {
-        console.log('Delete country with ID:', countryId);
+    const handleDeleteCountry = async() => {
+        console.log('Delete country with ID:', selectedCountry.id);
         // Implement delete functionality here
         try {
-            await countriesService.deleteCountry(countryId);
+            await countriesService.deleteCountry(selectedCountry.id);
             fetchCountries();
             toast.success('Ülke başarıyla silindi');
         } catch (error) {
@@ -137,6 +154,7 @@ const Countries = () => {
             toast.error('Ülke ekleme hatası');
         } finally {
             setIsLoading(false);
+            form.reset();
         }
     };
     
@@ -177,7 +195,7 @@ const Countries = () => {
                                                     <Edit className="mr-2 h-4 w-4" />
                                                     <span>Düzenle</span>
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleDeleteCountry(country.id)} variant="destructive" className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
+                                                <DropdownMenuItem onClick={() => handleDeleteCountryClick(country)} variant="destructive" className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
                                                     <Trash2 className="mr-2 h-4 w-4" />
                                                     <span>Sil</span>
                                                 </DropdownMenuItem>
@@ -256,9 +274,6 @@ const Countries = () => {
                                 </div>
                             </div>
                             <DialogFooter>
-                                <Button variant="outline" onClick={() => setAddCountryDialogOpen(false)}>
-                                    İptal
-                                </Button>
                                 <Button 
                                 //onClick={handleSaveEdit} 
                                 disabled={isLoading}
@@ -270,6 +285,20 @@ const Countries = () => {
                     </Form>
                 </DialogContent>
             </Dialog>
+            <AlertDialog open={deleteCountryDialogOpen} onOpenChange={setDeleteCountryDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Ülkeyi silmek istediğinize emin misiniz?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Bu işlem geri alınamaz.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>İptal</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDeleteCountry()}>Onayla</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>  
         </>
     )
 }

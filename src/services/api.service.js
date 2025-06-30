@@ -47,6 +47,20 @@ class ApiService {
     }
   } 
 
+  async deleteWithData(endpoint, data, headers = null) {
+    try {
+      const config = { 
+        headers,
+        data: data // DELETE metodunda body verisi config içinde data özelliği olarak gönderilir
+      };
+      const response = await axiosInstance.delete(endpoint, config);
+      return response.data;
+    } catch (error) {
+      console.error('API request error:', error);
+      throw error;
+    }
+  }
+
   async patch(endpoint, data, headers = null) {
     try {
       console.log(`Requesting: ${endpoint}`);

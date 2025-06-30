@@ -68,6 +68,12 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "../components/ui/accordion"
 
 function Groups() {
     const [groups, setGroups] = useState([]);
@@ -132,13 +138,7 @@ function Groups() {
     })
 
     const formSchema4 = z.object({
-        user_id: z.string().uuid({
-            message: "Kullanıcı seçiniz.",
-        }),
-        old_role_id: z.string().uuid({
-            message: "Eski rol seçiniz.",
-        }),
-        new_role_id: z.string().uuid({
+        role_id: z.string().uuid({
             message: "Yeni rol seçiniz.",
         }),
     })
@@ -213,9 +213,7 @@ function Groups() {
     const updateGroupMemberForm = useForm({
         resolver: zodResolver(formSchema4),
         defaultValues: {
-            user_id: "",
-            old_role_id: "",
-            new_role_id: "",
+            role_id: "",
         },
     });
     
@@ -461,16 +459,42 @@ function Groups() {
 
     const handleUpdateGroupMember = async (data) => {
         setIsLoading(true);
+        console.log(data);
+        const updatedData = {
+            user_id: selectedGroupMember.id,
+            role_id: data.role_id,
+        };
         try {
-            if (!data.user_id.trim() || !data.role_id.trim()) return;
-            console.log(data);
-            await groupMembersService.updateGroupMember(selectedGroupMember.id, data);
+            if (!updatedData.user_id.trim() || !updatedData.role_id.trim()) return;
+            console.log(updatedData);
+            await groupMembersService.addMemberToGroup(selectedGroup.id, updatedData);
             toast.success('Grup üyesi başarıyla güncellendi');
             setIsLoading(false);
             fetchGroups(); // Refresh the list
         } catch (error) {
             console.error('Error updating group member:', error);
             toast.error('Grup üyesi güncellenemedi');
+        } finally {
+            setIsLoading(false);
+            setUpdateGroupMemberDialogOpen(false);
+            updateGroupMemberForm.reset();
+        }
+    };
+
+    const handleDeleteGroupMemberRole = async (group_id, role_id, user_id) => {
+        setIsLoading(true);        
+        const data = {
+            user_id: user_id,
+            role_id: role_id,
+        };
+        try {
+            await groupMembersService.deleteGroupMemberRole(group_id, data);
+            toast.success('Rol başarıyla silindi');
+            setIsLoading(false);
+            fetchGroups(); // Refresh the list
+        } catch (error) {
+            console.error('Error deleting group member role:', error);
+            toast.error('Rol silinemedi');
         } finally {
             setIsLoading(false);
             setUpdateGroupMemberDialogOpen(false);
@@ -590,8 +614,9 @@ function Groups() {
                                             </div>
                                             </div>
                                             {/* Üyeler */}
-                                            <div className="pt-4 border-t border-gray-100">
-                                                <div className="flex items-center justify-between gap-2  mb-4">
+                                            <Accordion type="single" collapsible>
+                                                <AccordionItem value="item-1">
+                                                    <AccordionTrigger className="cursor-pointer">
                                                     <div className="flex items-center gap-2">
                                                         <div className="p-1.5 rounded-md bg-indigo-50">
                                                             <User className="h-4 w-4 text-indigo-600" />
@@ -600,57 +625,63 @@ function Groups() {
                                                             Grup Üyeleri ({group.users.length})
                                                         </span>
                                                     </div>
-                                                    <Button variant="default" onClick={() => addMemberToGroupClick(group)} className="bg-secondary text-primary border-2 hover:bg-primary hover:text-secondary">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="flex items-center gap-1">
-                                                                <User className="h-5 w-5" />
-                                                                <span>Üye Ekle</span>
-                                                            </div>
-                                                            <Plus className="h-5 w-5" />
-                                                        </div>
-                                                    </Button>
-                                                </div>
-                                                
-                                                
-                                                <div className="grid grid-cols-1 gap-3">
-                                                    {group.users.map((user, index) => (
-                                                        <div key={user.id} className="bg-secondary border border-gray-100 rounded-lg shadow-sm p-3 hover:shadow-md transition-all">
-                                                            <div className="flex justify-between items-start">
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="w-10 h-10 bg-indigo-200 rounded-full flex items-center justify-center text-sm font-medium text-indigo-700">
-                                                                        {user.first_name.charAt(0).toUpperCase() + user.last_name.charAt(0).toUpperCase()}
-                                                                    </div>
-                                                                    <div>
-                                                                        <h4 className="font-medium text-primary">{user.first_name} {user.last_name}</h4>
-                                                                        <p className="text-sm text-gray-500">{user.email}</p>
-                                                                    </div>
-                                                                </div>
-                                                                <Button variant="ghost" className="bg-secondary text-primary border-2 hover:bg-primary hover:text-secondary" onClick={() => updateGroupMemberClick(group, user)}>
-                                                                    <div className="flex items-center"> 
-                                                                        <Edit className="h-2 w-2" />
+                                                    </AccordionTrigger>
+                                                    <AccordionContent>
+                                                        <div className="pt-4 border-t border-gray-100">
+                                                            <div className="flex items-center justify-end gap-2  mb-4">
+                                                                <Button variant="default" onClick={() => addMemberToGroupClick(group)} className="bg-secondary text-primary border-2 hover:bg-primary hover:text-secondary">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="flex items-center gap-1">
+                                                                            <User className="h-5 w-5" />
+                                                                            <span>Üye Ekle</span>
+                                                                        </div>
+                                                                        <Plus className="h-5 w-5" />
                                                                     </div>
                                                                 </Button>
                                                             </div>
-                                                            
-                                                            {user.roles.length > 0 && (
-                                                                <div className="mt-3 pt-3 border-t border-gray-100">
-                                                                    <p className="text-xs font-medium text-gray-500 mb-2">Roller</p>
-                                                                    <div className="flex flex-wrap gap-2">
-                                                                        {user.roles.map((role, index) => (
-                                                                            <div key={role.id} className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs flex items-center gap-1">
-                                                                                <span className="font-medium">{role.role}</span>
-                                                                                {role.category && (
-                                                                                    <span className="text-indigo-500 bg-indigo-100 px-1.5 py-0.5 rounded-full text-[10px]">{role.category}</span>
-                                                                                )}
+                                                
+                                                            <div className="grid grid-cols-1 gap-3">
+                                                                {group.users.map((user, index) => (
+                                                                    <div key={user.id} className="bg-secondary border border-gray-100 rounded-lg shadow-sm p-3 hover:shadow-md transition-all">
+                                                                        <div className="flex justify-between items-start">
+                                                                            <div className="flex items-center gap-3">
+                                                                                <div className="w-10 h-10 bg-indigo-200 rounded-full flex items-center justify-center text-sm font-medium text-indigo-700">
+                                                                                    {user.first_name.charAt(0).toUpperCase() + user.last_name.charAt(0).toUpperCase()}
+                                                                                </div>
+                                                                                <div>
+                                                                                    <h4 className="font-medium text-primary">{user.first_name} {user.last_name}</h4>
+                                                                                    <p className="text-sm text-gray-500">{user.email}</p>
+                                                                                </div>
                                                                             </div>
-                                                                        ))}
+                                                                            <Button variant="ghost" className="bg-secondary text-primary border-2 hover:bg-primary hover:text-secondary" onClick={() => updateGroupMemberClick(group, user)}>
+                                                                                <div className="flex items-center"> 
+                                                                                    <Edit className="h-2 w-2" />
+                                                                                </div>
+                                                                            </Button>
+                                                                        </div>
+                                                                        
+                                                                        {user.roles.length > 0 && (
+                                                                            <div className="mt-3 pt-3 border-t border-gray-100">
+                                                                                <p className="text-xs font-medium text-gray-500 mb-2">Roller</p>
+                                                                                <div className="flex flex-wrap gap-2">
+                                                                                    {user.roles.map((role, index) => (
+                                                                                        <div key={role.id} className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs flex items-center gap-1">
+                                                                                            <span className="font-medium">{role.role}</span>
+                                                                                            {role.category && (
+                                                                                                <span className="text-indigo-500 bg-indigo-100 px-1.5 py-0.5 rounded-full text-[10px]">{role.category}</span>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </div>
+                                                                        )}
                                                                     </div>
-                                                                </div>
-                                                            )}
+                                                                ))}
+                                                            </div>
                                                         </div>
-                                                    ))}
-                                                </div>
-                                            </div>
+                                                    </AccordionContent>
+                                                </AccordionItem>
+                                            </Accordion>
                                     </CardContent>
                                 </Card>
                             </li>
@@ -964,9 +995,11 @@ function Groups() {
             <Dialog open={updateGroupDialogOpen} onOpenChange={setUpdateGroupDialogOpen}>
                 <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
-                            <DialogTitle>Grup Ekle</DialogTitle>
+                            <DialogTitle>Grup Düzenle</DialogTitle>
                             <DialogDescription>
-                                Grup adını ve açıklamasını girip kaydet butonuna tıklayın.
+                                <span>
+                                   <span className="font-bold">{selectedGroup && selectedGroup.name}</span>  grubunun bilgilerini düzenleyebilirsiniz.
+                                </span>
                             </DialogDescription>
                         </DialogHeader>
                         <Form {...updateGroupForm}>
@@ -1470,9 +1503,9 @@ function Groups() {
             <Dialog open={addGroupMemberDialogOpen} onOpenChange={setAddGroupMemberDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Rol Ekle</DialogTitle>
+                        <DialogTitle>Gruba Üye Ekle</DialogTitle>
                         <DialogDescription>
-                            Yeni bir rol ekleyin
+                            Yeni bir üye ekleyin
                         </DialogDescription>
                     </DialogHeader>
                     <Form {...addGroupMembersForm}>
@@ -1542,43 +1575,61 @@ function Groups() {
                     <DialogHeader>
                         <DialogTitle>Grup Üyesi Düzenle</DialogTitle>
                         <DialogDescription>
-                            Grup üyesinin rollerini düzenleyin.
+                            <span className="font-bold">{selectedGroupMember && selectedGroupMember.first_name + " " + selectedGroupMember.last_name} </span>Grup üyesinin rollerini düzenleyin.
                         </DialogDescription>
                     </DialogHeader>
                     <Form {...updateGroupMemberForm}>
                         <form onSubmit={updateGroupMemberForm.handleSubmit(handleUpdateGroupMember)} className="space-y-4">
-                            <FormField
-                                control={updateGroupMemberForm.control}
-                                name="role_id"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Rol</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Rol Seçiniz" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {roles.map((role) => (
-                                                    <SelectItem key={role.id} value={role.id}>
-                                                        {role.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <DialogFooter>
-                                <Button 
-                                //onClick={handleSaveEdit} 
-                                disabled={isLoading}
-                                >
-                                    {isLoading ? "Kaydediliyor..." : "Kaydet"}
-                                </Button>
-                            </DialogFooter>
+                            <div className='flex items-end justify-between'>
+                                <FormField
+                                    control={updateGroupMemberForm.control}
+                                    name="role_id"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Rol Ekle</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Rol Seçiniz" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {roles.map((role) => (
+                                                        <SelectItem key={role.id} value={role.id}>
+                                                            {role.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <DialogFooter>
+                                    <Button 
+                                    disabled={isLoading}
+                                    >
+                                        {isLoading ? "Kaydediliyor..." : "Kaydet"}
+                                    </Button>
+                                </DialogFooter>
+                            </div>
                         </form>
                     </Form>
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-3">
+                        {selectedGroupMember && Array.isArray(selectedGroupMember.roles) && selectedGroupMember.roles.map((role) => (
+                            <div key={role.id} className="rounded-md border bg-card hover:bg-accent/10 transition-colors">
+                                <div className="flex items-center p-3 justify-between">
+                                    <div className='flex items-center'>
+                                        <User className="h-4 w-4 mr-2 text-primary" />
+                                        <span>{role.role} - {role.category}</span> 
+                                    </div>
+                                    <div>
+                                        <Button disabled={isLoading} onClick={() => handleDeleteGroupMemberRole(selectedGroup.id, role.role_id, selectedGroupMember.id)} variant="destructive" >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </DialogContent>
             </Dialog>
         </>

@@ -34,6 +34,16 @@ import {
     FormLabel,
     FormMessage,
 } from "../components/ui/form";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 const Regions = () => {
     const [regions, setRegions] = useState([]);
@@ -41,6 +51,7 @@ const Regions = () => {
     const [users, setUsers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [addRegionDialogOpen, setAddRegionDialogOpen] = useState(false);
+    const [deleteRegionDialogOpen, setDeleteRegionDialogOpen] = useState(false);
     const [updateRegionDialogOpen, setUpdateRegionDialogOpen] = useState(false);
     const [currentRegion, setCurrentRegion] = useState(null);
 
@@ -241,11 +252,17 @@ const Regions = () => {
         }
     };
 
+    // Delete Region Click
+    const handleDeleteRegionClick = (region) => {
+        setCurrentRegion(region);
+        setDeleteRegionDialogOpen(true);
+    };
+
     // Delete Region
-    const handleDeleteRegion = async (id) => {
+    const handleDeleteRegion = async () => {
         setIsLoading(true);
         try {
-            await regionsService.deleteRegion(id);
+            await regionsService.deleteRegion(currentRegion.id);
             toast.success('Bölge başarıyla silindi');
             setIsLoading(false);
             fetchRegions(); // Refresh the list
@@ -254,6 +271,8 @@ const Regions = () => {
             toast.error('Bölge silme hatası');
         } finally {
             setIsLoading(false);
+            setDeleteRegionDialogOpen(false);
+            setCurrentRegion(null);
         }
     };
     
@@ -302,7 +321,7 @@ const Regions = () => {
                                                                     <Edit className="mr-2 h-4 w-4" />
                                                                     <span>Düzenle</span>
                                                                 </DropdownMenuItem>
-                                                                <DropdownMenuItem onClick={() => handleDeleteRegion(region.id)} variant="destructive" className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
+                                                                <DropdownMenuItem onClick={() => handleDeleteRegionClick(region)} variant="destructive" className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
                                                                     <Trash2 className="mr-2 h-4 w-4" />
                                                                     <span>Sil</span>
                                                                 </DropdownMenuItem>
@@ -544,6 +563,20 @@ const Regions = () => {
                     </Form>
                 </DialogContent>        
             </Dialog>
+            <AlertDialog open={deleteRegionDialogOpen} onOpenChange={setDeleteRegionDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Bölgeyi silmek istediğinize emin misiniz?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Bu işlem geri alınamaz.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>İptal</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDeleteRegion()}>Onayla</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>  
         </>
     )
 }
