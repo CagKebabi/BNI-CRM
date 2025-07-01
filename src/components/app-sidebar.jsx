@@ -1,4 +1,5 @@
 import * as React from "react"
+import { useState, useEffect } from "react"
 import {
   AudioWaveform,
   BookOpen,
@@ -25,12 +26,12 @@ import {
 } from "@/components/ui/sidebar"
 import bniLogo from "@/assets/bni-2020-seeklogo.png"
 
-const user = localStorage.getItem('user');
+// localStorage değerleri artık doğrudan burada alınmayacak
 
 // This is sample data.
 const data = {
   user: {
-    name: user,
+    //name: user,
     //email: "m@example.com",
     avatar: "/avatars/shadcn.jpg",
   },
@@ -126,13 +127,74 @@ const data = {
 export function AppSidebar({
   ...props
 }) {
+  // State hook'ları ile kullanıcı bilgilerini saklama
+  const [username, setUsername] = useState(localStorage.getItem('user'));
+  const [isSuperuser, setIsSuperuser] = useState(localStorage.getItem('is_superuser') === 'true');
+
+  // Kullanıcı bilgilerini güncellemek için effect hook
+  useEffect(() => {
+    // Kullanıcı bilgilerini kontrol etmek için bir fonksiyon
+    const checkUserInfo = () => {
+      const currentUser = localStorage.getItem('user');
+      const currentSuperuser = localStorage.getItem('is_superuser') === 'true';
+      
+      if (currentUser !== username) {
+        setUsername(currentUser);
+      }
+      
+      if (currentSuperuser !== isSuperuser) {
+        setIsSuperuser(currentSuperuser);
+      }
+    };
+    
+    // İlk yüklemede kontrol et
+    checkUserInfo();
+    
+    // localStorage değişikliklerini dinle
+    window.addEventListener('storage', checkUserInfo);
+    
+    // Component unmount olduğunda event listener'ı temizle
+    return () => {
+      window.removeEventListener('storage', checkUserInfo);
+    };
+  }, [username, isSuperuser]);
+
+  // User data'sını güncelle
+  data.user.name = username;
+  
+  // Filter navigation items based on superuser status
+  const filteredNavItems = data.navMain.map(item => {
+    // Only show "Kullanıcılar" to superusers
+    if (item.title === "Kullanıcılar") {
+      return isSuperuser ? item : null;
+    }
+    
+    // For "Organizasyon" menu, filter its sub-items
+    if (item.title === "Organizasyon") {
+      // Create a copy of the item
+      const modifiedItem = { ...item };
+      
+      // Filter sub-items to only show "Gruplar" for non-superusers
+      if (!isSuperuser && modifiedItem.items) {
+        modifiedItem.items = modifiedItem.items.filter(subItem => 
+          subItem.title === "Gruplar"
+        );
+      }
+      
+      return modifiedItem;
+    }
+    
+    // Show other items to all users
+    return item;
+  }).filter(Boolean); // Remove null items
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={filteredNavItems} />
         {/* <NavProjects projects={data.projects} /> */}
       </SidebarContent>
       <SidebarFooter>

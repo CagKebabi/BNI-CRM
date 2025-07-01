@@ -14,6 +14,7 @@ class AuthService {
                 localStorage.setItem('user_id', response.user_id);
               }
 
+            console.log("ıs superuser:", localStorage.getItem('is_superuser'));
             return response;
         } catch (error) {
             console.log("Login error:", error);

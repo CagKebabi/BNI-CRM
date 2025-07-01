@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import {
   BadgeCheck,
   Bell,
@@ -32,11 +33,42 @@ import {
 import { useNavigate } from "react-router-dom"
 import { authService } from "../services/auth.service"
 
-  export function NavUser({user}) {
+export function NavUser({user}) {
   const { isMobile } = useSidebar()
-
   const navigate = useNavigate();
-
+  
+  // Kullanıcı bilgilerini state olarak tutma
+  const [userData, setUserData] = useState({
+    name: user?.name || localStorage.getItem('user'),
+    email: user?.email || ''
+  });
+  
+  // Kullanıcı bilgilerini güncellemek için effect hook
+  useEffect(() => {
+    // Kullanıcı bilgilerini kontrol etmek için bir fonksiyon
+    const checkUserInfo = () => {
+      const currentUser = localStorage.getItem('user');
+      
+      if (currentUser !== userData.name) {
+        setUserData(prevData => ({
+          ...prevData,
+          name: currentUser
+        }));
+      }
+    };
+    
+    // İlk yüklemede kontrol et
+    checkUserInfo();
+    
+    // localStorage değişikliklerini dinle
+    window.addEventListener('storage', checkUserInfo);
+    
+    // Component unmount olduğunda event listener'ı temizle
+    return () => {
+      window.removeEventListener('storage', checkUserInfo);
+    };
+  }, [userData.name]);
+  
   const handleLogout = () => {
     authService.logout();
     navigate('/login');
@@ -55,8 +87,8 @@ import { authService } from "../services/auth.service"
                 <AvatarFallback className="rounded-lg">CN</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
-                <span className="truncate text-xs">{user.email}</span>
+                <span className="truncate font-medium">{userData.name}</span>
+                <span className="truncate text-xs">{userData.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -73,8 +105,8 @@ import { authService } from "../services/auth.service"
                   <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
+                  <span className="truncate font-medium">{userData.name}</span>
+                  <span className="truncate text-xs">{userData.email}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
