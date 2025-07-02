@@ -84,7 +84,14 @@ axiosInstance.interceptors.response.use(
                 processQueue(refreshError, null);
                 localStorage.removeItem('access');
                 localStorage.removeItem('refresh');
-                window.location.href = '/login'; // Login sayfasına yönlendir
+                localStorage.removeItem('user');
+                localStorage.removeItem('is_superuser');
+                localStorage.removeItem('user_id');
+                                
+                if (!window.location.pathname.includes('/login')) {
+                    window.location.href = '/login'; // Login sayfasına yönlendir
+                }
+                //window.location.href = '/login'; // Login sayfasına yönlendir
                 return Promise.reject(refreshError);
             } finally {
                 isRefreshing = false;

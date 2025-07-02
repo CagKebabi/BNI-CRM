@@ -4,30 +4,35 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "../components/ui/button"
 import { Separator } from "../components/ui/separator"
 import { Users, UserPlus, Globe, Map, UsersRound, Home as HomeIcon } from "lucide-react"
+import { useUser } from "../contexts/UserContext"
 
 function Home() {
+  const { isSuperUser } = useUser();
+
   const navigationCards = [
     {
       title: "Kullanıcı Listesi",
       description: "Tüm kullanıcıları görüntüleyin ve yönetin",
       icon: <Users className="h-8 w-8 text-green-500" />,
       path: "/user-list",
-      color: "bg-green-200"
-      //color: "bg-blue-50"
+      color: "bg-green-200",
+      showOnlyForSuperUser: true,
     },
     {
       title: "Ülkeler",
       description: "Ülke listesini görüntüleyin ve yönetin",
       icon: <Globe className="h-8 w-8 text-purple-500" />,
       path: "/country-list",
-      color: "bg-purple-200"
+      color: "bg-purple-200",
+      showOnlyForSuperUser: true,
     },
     {
       title: "Bölgeler",
       description: "Bölge listesini görüntüleyin ve yönetin",
       icon: <Map className="h-8 w-8 text-amber-500" />,
       path: "/region-list",
-      color: "bg-amber-200"
+      color: "bg-amber-200",
+      showOnlyForSuperUser: true,
     },
     {
       title: "Gruplar",
@@ -37,6 +42,8 @@ function Home() {
       color: "bg-rose-200 "
     }
   ]
+
+  const filteredNavigationCards = navigationCards.filter(card => card.showOnlyForSuperUser ? isSuperUser : true);
 
   return (
     <div className="container ">
@@ -48,7 +55,7 @@ function Home() {
       <Separator className="my-6" />
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {navigationCards.map((card, index) => (
+        {filteredNavigationCards.map((card, index) => (
           <Link to={card.path} key={index} className="no-underline text-foreground">
             <Card className={`h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 `}>
               <CardHeader>

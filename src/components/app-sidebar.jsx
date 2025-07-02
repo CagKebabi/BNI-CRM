@@ -1,5 +1,5 @@
 import * as React from "react"
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import {
   AudioWaveform,
   BookOpen,
@@ -25,6 +25,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import bniLogo from "@/assets/bni-2020-seeklogo.png"
+import { useUser } from "@/contexts/UserContext"
 
 // localStorage değerleri artık doğrudan burada alınmayacak
 
@@ -127,37 +128,14 @@ const data = {
 export function AppSidebar({
   ...props
 }) {
-  // State hook'ları ile kullanıcı bilgilerini saklama
-  const [username, setUsername] = useState(localStorage.getItem('user'));
-  const [isSuperuser, setIsSuperuser] = useState(localStorage.getItem('is_superuser') === 'true');
+  // UserContext'ten kullanıcı bilgilerini al
+  const { username, isSuperUser } = useUser();
 
-  // Kullanıcı bilgilerini güncellemek için effect hook
+  // useEffect hook'u artık UserContext içinde yönetiliyor
   useEffect(() => {
-    // Kullanıcı bilgilerini kontrol etmek için bir fonksiyon
-    const checkUserInfo = () => {
-      const currentUser = localStorage.getItem('user');
-      const currentSuperuser = localStorage.getItem('is_superuser') === 'true';
-      
-      if (currentUser !== username) {
-        setUsername(currentUser);
-      }
-      
-      if (currentSuperuser !== isSuperuser) {
-        setIsSuperuser(currentSuperuser);
-      }
-    };
-    
-    // İlk yüklemede kontrol et
-    checkUserInfo();
-    
-    // localStorage değişikliklerini dinle
-    window.addEventListener('storage', checkUserInfo);
-    
-    // Component unmount olduğunda event listener'ı temizle
-    return () => {
-      window.removeEventListener('storage', checkUserInfo);
-    };
-  }, [username, isSuperuser]);
+    // Context değişikliklerini izle
+    console.log("AppSidebar: User context updated", { username, isSuperUser });
+  }, [username, isSuperUser]);
 
   // User data'sını güncelle
   data.user.name = username;
@@ -166,7 +144,7 @@ export function AppSidebar({
   const filteredNavItems = data.navMain.map(item => {
     // Only show "Kullanıcılar" to superusers
     if (item.title === "Kullanıcılar") {
-      return isSuperuser ? item : null;
+      return isSuperUser ? item : null;
     }
     
     // For "Organizasyon" menu, filter its sub-items
@@ -175,7 +153,7 @@ export function AppSidebar({
       const modifiedItem = { ...item };
       
       // Filter sub-items to only show "Gruplar" for non-superusers
-      if (!isSuperuser && modifiedItem.items) {
+      if (!isSuperUser && modifiedItem.items) {
         modifiedItem.items = modifiedItem.items.filter(subItem => 
           subItem.title === "Gruplar"
         );

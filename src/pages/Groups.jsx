@@ -74,6 +74,7 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "../components/ui/accordion"
+import { useUser } from "../contexts/UserContext";
 
 function Groups() {
     const [groups, setGroups] = useState([]);
@@ -91,7 +92,10 @@ function Groups() {
     const [selectedRole, setSelectedRole] = useState(null);
     const [selectedGroupMember, setSelectedGroupMember] = useState(null);
     const [editingRoleId, setEditingRoleId] = useState(null);
+    const { isSuperUser, userId } = useUser();  
     
+    console.log("userId", userId);
+
     const formSchema = z.object({
         name: z.string().min(2, {
             message: "Grup adı en az 2 karakter olmalıdır.",
@@ -507,6 +511,7 @@ function Groups() {
             <div className="max-w-4xl p-6">
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold mb-6">Gruplar</h1>
+                    {isSuperUser && (
                     <div className='flex items-center gap-2'>
                         <div className="flex items-center gap-2 border border-gray-200 rounded-md p-2">
                             <Button variant="default" onClick={() => setRolesDialogOpen(true)} className="bg-secondary text-primary border-2 hover:bg-primary hover:text-secondary">
@@ -525,6 +530,7 @@ function Groups() {
                             <Plus className="h-5 w-5" />
                         </Button>
                     </div>
+                    )}
                 </div>
                 {isLoading ? (
                     <div className="flex justify-center items-center h-64">
@@ -533,16 +539,22 @@ function Groups() {
                 ): (
                     <div>
                         <ul className="space-y-2">
-                        {groups.map((group) => (
+                        {groups && groups.length > 0 ? groups.map((group) => (
                             <li key={group.id}>
                                 <Card className="hover:shadow-lg transition-shadow duration-200">
                                     <CardHeader className="pb-2 flex justify-between">
                                         <div className="flex flex-col gap-2">
-                                            <CardTitle className="flex items-center gap-2 text-lg font-semibold">
-                                                <div className="p-2 rounded-lg bg-blue-50">
-                                                    <Users className="h-5 w-5 text-blue-600" />
+                                            <CardTitle >
+                                                <div className="flex items-center gap-2 text-lg font-semibold">
+                                                    <div className="p-2 rounded-lg bg-blue-50">
+                                                        <Users className="h-5 w-5 text-blue-600" />
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span>{group.name}</span>
+                                                        <span className='text-sm text-gray-500'>{" Yönetici: " + group.region_exc_director_name}</span>
+                                                    </div>
                                                 </div>
-                                                {group.name}
+                                                
                                             </CardTitle>
                                             <CardDescription className="mt-0">
                                                 <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 text-sm text-red-700 w-fit">
@@ -551,6 +563,7 @@ function Groups() {
                                                 </div>
                                             </CardDescription>
                                         </div>
+                                        {isSuperUser && 
                                         <div>
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger>
@@ -571,6 +584,8 @@ function Groups() {
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </div>
+                                        }
+                                        
                                     </CardHeader>
                                     <CardContent className="pt-4">
                                         <div className="grid grid-cols-2 gap-4 mb-6">
@@ -628,18 +643,23 @@ function Groups() {
                                                     </AccordionTrigger>
                                                     <AccordionContent>
                                                         <div className="pt-4 border-t border-gray-100">
-                                                            <div className="flex items-center justify-end gap-2  mb-4">
-                                                                <Button variant="default" onClick={() => addMemberToGroupClick(group)} className="bg-secondary text-primary border-2 hover:bg-primary hover:text-secondary">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div className="flex items-center gap-1">
-                                                                            <User className="h-5 w-5" />
-                                                                            <span>Üye Ekle</span>
-                                                                        </div>
-                                                                        <Plus className="h-5 w-5" />
+                                                            {
+                                                                isSuperUser || group.region_exc_director_id === userId ? 
+                                                                    <div className="flex items-center justify-end gap-2  mb-4">
+                                                                        <Button variant="default" onClick={() => addMemberToGroupClick(group)} className="bg-secondary text-primary border-2 hover:bg-primary hover:text-secondary">
+                                                                            <div className="flex items-center gap-2">
+                                                                                <div className="flex items-center gap-1">
+                                                                                    <User className="h-5 w-5" />
+                                                                                    <span>Üye Ekle</span>
+                                                                                </div>
+                                                                                <Plus className="h-5 w-5" />
+                                                                            </div>
+                                                                        </Button>
                                                                     </div>
-                                                                </Button>
-                                                            </div>
-                                                
+                                                                :
+                                                                    ""
+                                                                
+                                                            }
                                                             <div className="grid grid-cols-1 gap-3">
                                                                 {group.users.map((user, index) => (
                                                                     <div key={user.id} className="bg-secondary border border-gray-100 rounded-lg shadow-sm p-3 hover:shadow-md transition-all">
@@ -653,11 +673,16 @@ function Groups() {
                                                                                     <p className="text-sm text-gray-500">{user.email}</p>
                                                                                 </div>
                                                                             </div>
-                                                                            <Button variant="ghost" className="bg-secondary text-primary border-2 hover:bg-primary hover:text-secondary" onClick={() => updateGroupMemberClick(group, user)}>
-                                                                                <div className="flex items-center"> 
-                                                                                    <Edit className="h-2 w-2" />
-                                                                                </div>
-                                                                            </Button>
+                                                                            {
+                                                                                isSuperUser || group.region_exc_director_id === userId ? 
+                                                                                <Button variant="ghost" className="bg-secondary text-primary border-2 hover:bg-primary hover:text-secondary" onClick={() => updateGroupMemberClick(group, user)}>
+                                                                                    <div className="flex items-center"> 
+                                                                                        <Edit className="h-2 w-2" />
+                                                                                    </div>
+                                                                                </Button>
+                                                                            :
+                                                                                ""
+                                                                            }
                                                                         </div>
                                                                         
                                                                         {user.roles.length > 0 && (
@@ -685,7 +710,9 @@ function Groups() {
                                     </CardContent>
                                 </Card>
                             </li>
-                        ))}
+                        )): (
+                            <p className="text-center">Herhangi bir grup bulunamadı</p>
+                        )}
                         </ul>
                     </div>
                 )}

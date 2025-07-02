@@ -9,6 +9,7 @@ import Regions from "./pages/Regions";
 import Groups from "./pages/Groups";
 import Users from "./pages/Users";
 import Home from "./pages/Home";
+import { UserProvider } from "./contexts/UserContext";
 
 function App() {
   const router = createBrowserRouter([
@@ -58,7 +59,11 @@ function App() {
     }
   ]);
 
-  return <RouterProvider router={router} />
+  return (
+    <UserProvider>
+      <RouterProvider router={router} />
+    </UserProvider>
+  )
   // (
   //   // <>
   //   // <RouterProvider router={router} />

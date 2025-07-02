@@ -111,14 +111,14 @@ export function NavUser({user}) {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              {/* <DropdownMenuItem>
                 <BadgeCheck />
                 Hesap
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Bell />
                 Bildirimler
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
