@@ -375,8 +375,13 @@ function Groups() {
         try {
             console.log(data);
             if (!data.name.trim()) return;
+
+            const modifiedData = {
+                ...data,
+                category: data.category === "Diğer" ? null : data.category,
+            };
             
-            await rolesService.createRole(data);
+            await rolesService.createRole(modifiedData);
             toast.success('Rol başarıyla eklendi');
             setIsLoading(false);
             setAddRolesDialogOpen(false);
@@ -394,8 +399,13 @@ function Groups() {
         setIsLoading(true);
         try {
             if (!data.name.trim()) return;
+
+            const modifiedData = {
+                ...data,
+                category: data.category === "Diğer" ? null : data.category,
+            };
             
-            await rolesService.updateRole(selectedRole.id, data);
+            await rolesService.updateRole(selectedRole.id, modifiedData);
             toast.success('Rol başarıyla güncellendi');
             setIsLoading(false);
             setEditingRoleId(null); // Düzenleme modunu kapat
