@@ -89,9 +89,13 @@ axiosInstance.interceptors.response.use(
                 localStorage.removeItem('user_id');
                                 
                 if (!window.location.pathname.includes('/login')) {
-                    window.location.href = '/login'; // Login sayfasına yönlendir
+                    // Tarayıcı geçmişine yeni bir giriş eklemek yerine mevcut girişi değiştir
+                    window.history.replaceState(null, '', '/login');
+                    
+                    // React uygulamasını URL değişikliğinden haberdar etmek için özel bir olay tetikle
+                    window.dispatchEvent(new Event('popstate'));
+                    //window.location.href = '/login'; // Login sayfasına yönlendir
                 }
-                //window.location.href = '/login'; // Login sayfasına yönlendir
                 return Promise.reject(refreshError);
             } finally {
                 isRefreshing = false;
