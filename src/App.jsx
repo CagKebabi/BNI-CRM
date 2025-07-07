@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom"
+import { createBrowserRouter, createHashRouter, RouterProvider, Navigate } from "react-router-dom"
 // import DashboardLayout from "./layout/DashboardLayout"
 import Login from "./pages/Login";
 import DashboardNavbar from "./layout/dashboarNavbar";
@@ -9,6 +9,7 @@ import Regions from "./pages/Regions";
 import Groups from "./pages/Groups";
 import Users from "./pages/Users";
 import Home from "./pages/Home";
+import PagePrint from "./pages/PagePrint";
 import { UserProvider } from "./contexts/UserContext";
 
 function App() {
@@ -43,6 +44,10 @@ function App() {
             {
               path: "user-list",
               element: <Users />,
+            },
+            {
+              path: "page-print",
+              element: <PagePrint />,
             },
           ],
         }
