@@ -20,7 +20,7 @@ export default defineConfig({
     cors: true,
     proxy: {
       '/api': {
-        target: 'http://92.205.61.102',
+        target: 'https://api.inrest.co',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, ''),

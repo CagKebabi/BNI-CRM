@@ -1,6 +1,6 @@
 // API temel URL'si
 // Development ortamında proxy kullanıyoruz, production'da doğrudan API URL'sini kullanacağız
-//export const API_BASE_URL = import.meta.env.PROD ? 'http://92.205.61.102' : '/api';
+// export const API_BASE_URL = import.meta.env.PROD ? 'http://92.205.61.102' : '/api';
 export const API_BASE_URL = import.meta.env.PROD ? 'https://api.inrest.co' : '/api';
 // API endpoint'leri
 export const ENDPOINTS = {
