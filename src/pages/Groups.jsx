@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { groupsService } from '../services/groups.service';
 import { regionsService } from '../services/regions.service';
 import { rolesService } from '../services/roles.service';
@@ -23,6 +24,7 @@ import {
     Edit,
     Trash2,
     Loader2,
+    ExternalLink,
   } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '../components/ui/input';
@@ -75,8 +77,11 @@ import {
     AccordionTrigger,
 } from "../components/ui/accordion"
 import { useUser } from "../contexts/UserContext";
+import { useGroup } from "../contexts/GroupContext";
 
 function Groups() {
+    const navigate = useNavigate();
+    const { setSelectedGroupContext } = useGroup();
     const [groups, setGroups] = useState([]);
     const [regions, setRegions] = useState([]);
     const [roles, setRoles] = useState([]);
@@ -296,6 +301,16 @@ function Groups() {
         updateGroupForm.setValue('term_end', group.term_end);
         
         setUpdateGroupDialogOpen(true);
+    };
+    
+    // Grup detayı görüntüleme fonksiyonu
+    const handleViewGroupDetail = (group) => {
+        // Seçilen grup bilgisini context'e kaydet
+        setSelectedGroupContext(group);
+        console.log('Grup detayı görüntüleniyor:', group);
+        
+        // GroupDetail sayfasına yönlendir
+        navigate('/group-list/group-detail');
     };
     
     const handleAddGroup = async (data) => {
@@ -563,6 +578,9 @@ function Groups() {
                                                         <span>{group.name}</span>
                                                         <span className='text-sm text-gray-500'>{" Yönetici: " + group.region_exc_director_name}</span>
                                                     </div>
+                                                    <Button variant="outline" size="icon" onClick={() => handleViewGroupDetail(group)}>
+                                                        <ExternalLink className="h-5 w-5" />
+                                                    </Button>
                                                 </div>
                                                 
                                             </CardTitle>
@@ -617,16 +635,6 @@ function Groups() {
                                                     <span className="font-medium">Toplantı Saati</span>
                                                 </div>
                                                 <p className="text-sm pl-9">{group.start_time} - {group.end_time}</p>
-                                            </div>
-                                            {/* Toplantı Tarihi ve Dönem */}
-                                            <div className="space-y-1">
-                                                <div className="flex items-center gap-2 text-sm">
-                                                    <div className="p-1.5 rounded-md bg-orange-50">
-                                                        <CalendarDays className="h-4 w-4 text-orange-600" />
-                                                    </div>
-                                                    <span className="font-medium">Toplantı Tarihi</span>
-                                                </div>
-                                                <p className="text-sm pl-9">{group.meeting_date}</p>
                                             </div>
                                             <div className="space-y-1">
                                                 <div className="flex items-center gap-2 text-sm">

@@ -12,6 +12,7 @@ import Users from "./pages/Users";
 import Home from "./pages/Home";
 import PagePrint from "./pages/PagePrint";
 import { UserProvider } from "./contexts/UserContext";
+import { GroupProvider } from "./contexts/GroupContext";
 
 function App() {
   const router = createBrowserRouter([
@@ -76,7 +77,9 @@ function App() {
 
   return (
     <UserProvider>
-      <RouterProvider router={router} />
+      <GroupProvider>
+        <RouterProvider router={router} />
+      </GroupProvider>
     </UserProvider>
   )
   // (
