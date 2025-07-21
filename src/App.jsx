@@ -7,6 +7,7 @@ import CreateUser from "./pages/CreateUser";
 import Countries from "./pages/Countries";
 import Regions from "./pages/Regions";
 import Groups from "./pages/Groups";
+import GroupDetail from "./pages/GroupDetail";
 import Users from "./pages/Users";
 import Home from "./pages/Home";
 import PagePrint from "./pages/PagePrint";
@@ -39,7 +40,16 @@ function App() {
             },
             {
               path: "group-list",
-              element: <Groups />,
+              children: [
+                {
+                  index: true,
+                  element: <Groups />,
+                },
+                {
+                  path: "group-detail",
+                  element: <GroupDetail />,
+                }
+              ],
             },
             {
               path: "user-list",
@@ -48,7 +58,7 @@ function App() {
             {
               path: "page-print",
               element: <PagePrint />,
-            },
+            }
           ],
         }
       ],

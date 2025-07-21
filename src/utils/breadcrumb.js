@@ -6,6 +6,7 @@ const routeMap = {
   '/country-list': { title: 'Ülkeler', parent: '/' },
   '/region-list': { title: 'Bölge Listesi', parent: '/' },
   '/group-list': { title: 'Grup Listesi', parent: '/' },
+  '/group-detail': { title: 'Grup Detayı', parent: '/group-list' },
 };
 
 export function generateBreadcrumbs(pathname) {

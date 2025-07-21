@@ -34,6 +34,11 @@ export const ENDPOINTS = {
   ADD_MEMBER_TO_GROUP: (groupId) => `/organization/groups/${groupId}/add-member/`,
   UPDATE_GROUP_MEMBER: (id) => `/organization/groups/${id}/update-member-role/`,
   DELETE_MEMBER_ROLE: (id) => `/organization/groups/${id}/remove-member-role/`,
+  // Visits endpoints
+  GET_VISITS: '/visits/visitors/',
+  CREATE_VISIT: '/visits/visits/',
+  UPDATE_VISIT: (id) => `/visits/visits/${id}/`,
+  DELETE_VISIT: (id) => `/visits/visits/${id}/`,
 };
 
 // API istekleri için varsayılan ayarlar
