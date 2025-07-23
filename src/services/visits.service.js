@@ -24,6 +24,17 @@ class VisitsService {
         }
     }
 
+    async createVisitorNote(data) {
+        try {
+            const response = await apiService.post(ENDPOINTS.CREATE_VISITOR_NOTE, data);
+            console.log("Ziyaret notu oluşturuldu:", response);
+            return response;
+        } catch (error) {
+            console.log("Ziyaret notu oluşturma hatası:", error);
+            throw error;
+        }
+    }
+
     async updateVisit(id, data) {
         try {
             const response = await apiService.patch(ENDPOINTS.UPDATE_VISIT(id), data);
