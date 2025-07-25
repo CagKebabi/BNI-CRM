@@ -371,10 +371,11 @@ function GroupDetail() {
             </div>
             <div className="flex w-full flex-col gap-6">
                 <Tabs defaultValue="visitors" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="grid w-full grid-cols-4">
                         <TabsTrigger value="info">Grup Bilgileri</TabsTrigger>
                         <TabsTrigger value="visitors">Ziyaretçiler</TabsTrigger>
                         <TabsTrigger value="members">Üyeler</TabsTrigger>
+                        <TabsTrigger value="openCategories">Açık Kategoriler</TabsTrigger>
                     </TabsList>
                     
                     <TabsContent value="info" className="mt-4">
@@ -624,6 +625,21 @@ function GroupDetail() {
                                         <p>Bu grupta henüz üye bulunmamaktadır.</p>
                                     </div>
                                 )}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                    <TabsContent value="openCategories" className="mt-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Üyeler</CardTitle>
+                                <CardDescription>
+                                    {selectedGroupContext ? `${selectedGroupContext.name} grubu açık kategoriler listesi` : 'Açık kategoriler'}
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-center py-8">
+                                    <p>Bu grupta henüz açık kategori bulunmamaktadır.</p>
+                                </div>
                             </CardContent>
                         </Card>
                     </TabsContent>
