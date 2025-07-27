@@ -42,6 +42,9 @@ export const ENDPOINTS = {
   DELETE_VISIT: (id) => `/visits/visitors/${id}/`,
   // Group Meetings endpoints
   GET_GROUP_MEETINGS: (groupId) => `/organization/meetings/?group=${groupId}`,
+  // Open Categories endpoints
+  CREATE_OPEN_CATEGORY: (id) => `/organization/groups/${id}/add-open-category/`,
+  DELETE_OPEN_CATEGORY: (groupId, categoryId) => `/organization/groups/${id}/remove-open-category/${categoryId}/`,
 };
 
 // API istekleri için varsayılan ayarlar

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { visitsService } from "../services/visits.service"
 import { groupMeetingsService } from "../services/groupMeetings.service"
+import { openCategoriesService } from "../services/openCategories.service"
 import { useGroup } from "../contexts/GroupContext"
 import { useUser } from "@/contexts/UserContext"
 import * as z from 'zod'
@@ -14,7 +15,7 @@ import { Label } from "@/components/ui/label"
 import { cn } from "../lib/utils";
 import { format } from "date-fns";
 import { Calendar } from "../components/ui/calendar";
-import { tr } from 'date-fns/locale';
+import { se, tr } from 'date-fns/locale';
 import { toast } from 'sonner';
 import {
   Form,
@@ -125,6 +126,12 @@ const addNoteFormSchema = z.object({
     }),
 });
 
+const addOpenCategoriesFormSchema = z.object({
+    name: z.string().min(2, {
+        message: "Kategori adı en az 2 karakter olmalıdır.",
+    }),
+});
+
 function GroupDetail() {
   const navigate = useNavigate()
   const { selectedGroupContext } = useGroup()
@@ -136,6 +143,7 @@ function GroupDetail() {
   const [updateVisitorDialogOpen, setUpdateVisitorDialogOpen] = useState(false)
   const [deleteVisitorDialogOpen, setDeleteVisitorDialogOpen] = useState(false)
   const [addNoteDialogOpen, setAddNoteDialogOpen] = useState(false)
+  const [addOpenCategoriesDialogOpen, setAddOpenCategoriesDialogOpen] = useState(false)
   const [groupMeetings, setGroupMeetings] = useState([])
   const [loadingMeetings, setLoadingMeetings] = useState(false)
 
@@ -179,6 +187,13 @@ function GroupDetail() {
     resolver: zodResolver(addNoteFormSchema),
     defaultValues: {
       content: "",
+    },
+  })
+
+  const addOpenCategoriesForm = useForm({
+    resolver: zodResolver(addOpenCategoriesFormSchema),
+    defaultValues: {
+      name: "",
     },
   })
 
@@ -330,6 +345,24 @@ function GroupDetail() {
       toast.error("Ziyaretçi silinemedi")
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  // Açık Kategoriler İşlemleri
+  const handleAddOpenCategory = async (data) => {
+    setIsLoading(true)
+    try {
+      const response = await openCategoriesService.createOpenCategory(selectedGroupContext.id, data)
+      console.log("Açık kategori oluşturuldu:", response)
+      setAddOpenCategoriesDialogOpen(false)
+      toast.success("Açık kategori başarıyla eklendi")
+      // Kategoriler güncellenecek
+    } catch (error) {
+      console.error("Açık kategori eklenirken hata oluştu:", error)
+      toast.error("Açık kategori eklenemedi")
+    } finally {
+      setIsLoading(false)
+      addOpenCategoriesForm.reset()
     }
   }
 
@@ -631,15 +664,41 @@ function GroupDetail() {
                     <TabsContent value="openCategories" className="mt-4">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Üyeler</CardTitle>
-                                <CardDescription>
-                                    {selectedGroupContext ? `${selectedGroupContext.name} grubu açık kategoriler listesi` : 'Açık kategoriler'}
-                                </CardDescription>
+                              <div className="flex items-center justify-between">
+                                <div className="flex flex-col gap-2">
+                                  <CardTitle>Açık Kategoriler</CardTitle>
+                                  <CardDescription>
+                                      {selectedGroupContext ? `${selectedGroupContext.name} grubu açık kategoriler listesi` : 'Açık kategoriler'}
+                                  </CardDescription>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button variant="default" size="icon" onClick={() => setAddOpenCategoriesDialogOpen(true)}>
+                                    <Plus className="h-5 w-5" />
+                                  </Button>
+                                </div>
+                              </div>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-center py-8">
-                                    <p>Bu grupta henüz açık kategori bulunmamaktadır.</p>
-                                </div>
+                                {selectedGroupContext && selectedGroupContext.open_categories && selectedGroupContext.open_categories.length > 0 ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                                        {selectedGroupContext.open_categories.map((category) => (
+                                            <div key={category.id} className="bg-secondary border border-gray-100 rounded-lg shadow-sm p-3 hover:shadow-md transition-all">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="">
+                                                            {category.name}
+                                                        </div>
+                                                        
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-8">
+                                        <p>Bu grupta açık kategori üye bulunmamaktadır.</p>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     </TabsContent>
@@ -1185,6 +1244,41 @@ function GroupDetail() {
                 </form>
               </Form>
           </DialogContent>
+        </Dialog>
+        <Dialog open={addOpenCategoriesDialogOpen} onOpenChange={setAddOpenCategoriesDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Açık Kategori Ekle</DialogTitle>
+                    <DialogDescription>
+                        Açık kategori adını girin.
+                    </DialogDescription>
+                </DialogHeader>
+                <Form {...addOpenCategoriesForm}>
+                  <form onSubmit={addOpenCategoriesForm.handleSubmit(handleAddOpenCategory)} className="space-y-6">
+                    <FormField
+                      control={addOpenCategoriesForm.control}
+                      name="name"
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Açık Kategori Adı</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Açık kategori adı" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                    />
+                    <DialogFooter>
+                      <Button 
+                        //onClick={handleSaveEdit} 
+                        disabled={isLoading}
+                      >
+                        {isLoading ? "Kaydediliyor..." : "Kaydet"}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+            </DialogContent>
         </Dialog>
         <AlertDialog open={deleteVisitorDialogOpen} onOpenChange={setDeleteVisitorDialogOpen}>
           <AlertDialogContent>
