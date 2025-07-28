@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { visitsService } from "../services/visits.service"
 import { groupMeetingsService } from "../services/groupMeetings.service"
 import { openCategoriesService } from "../services/openCategories.service"
+import { presentationsService } from "../services/presentations.service"
 import { useGroup } from "../contexts/GroupContext"
 import { useUser } from "@/contexts/UserContext"
 import * as z from 'zod'
@@ -132,17 +133,31 @@ const addOpenCategoriesFormSchema = z.object({
     }),
 });
 
+const addPresentationFormSchema = z.object({
+    meeting: z.string().uuid({
+        message: "Geçerli bir toplantı seçiniz.",
+    }),
+    user: z.string().uuid({
+        message: "Geçerli bir kullanıcının ID'si giriniz.",
+    }),
+});
+
 function GroupDetail() {
   const navigate = useNavigate()
   const { selectedGroupContext } = useGroup()
   const { userId } = useUser();
   const [visitors, setVisitors] = useState([])
+  const [presentations, setPresentations] = useState([])
+  const [openCategories, setOpenCategories] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [selectedVisitor, setSelectedVisitor] = useState(null)
   const [addVisitorDialogOpen, setAddVisitorDialogOpen] = useState(false)
   const [updateVisitorDialogOpen, setUpdateVisitorDialogOpen] = useState(false)
   const [deleteVisitorDialogOpen, setDeleteVisitorDialogOpen] = useState(false)
   const [addNoteDialogOpen, setAddNoteDialogOpen] = useState(false)
+  const [addPresentationDialogOpen, setAddPresentationDialogOpen] = useState(false)
+  const [updatePresentationDialogOpen, setUpdatePresentationDialogOpen] = useState(false)
+  const [selectedPresentation, setSelectedPresentation] = useState(null)
   const [addOpenCategoriesDialogOpen, setAddOpenCategoriesDialogOpen] = useState(false)
   const [groupMeetings, setGroupMeetings] = useState([])
   const [loadingMeetings, setLoadingMeetings] = useState(false)
@@ -197,6 +212,22 @@ function GroupDetail() {
     },
   })
 
+  const addPresentationForm = useForm({
+    resolver: zodResolver(addPresentationFormSchema),
+    defaultValues: {
+      meeting: "",
+      user: "",
+    },
+  })
+
+  const updatePresentationForm = useForm({
+    resolver: zodResolver(addPresentationFormSchema),
+    defaultValues: {
+      meeting: "",
+      user: "",
+    },
+  })
+
   useEffect(() => {
     // Eğer seçili grup yoksa, gruplar listesine yönlendir
     if (!selectedGroupContext) {
@@ -206,6 +237,8 @@ function GroupDetail() {
     
     fethVisitors()
     fetchGroupMeetings()
+    fetchPresentations()
+    fetchOpenCategories()
   }, [selectedGroupContext, navigate])
 
   const fethVisitors = async () => {
@@ -236,6 +269,36 @@ function GroupDetail() {
     } finally {
       setIsLoading(false)
       addVisitorForm.reset()
+    }
+  }
+
+  const fetchPresentations = async () => {
+    if (!selectedGroupContext?.id) return;
+    
+    setIsLoading(true)
+    try {
+      const response = await presentationsService.getPresentations(selectedGroupContext.id)
+      console.log("Sunumlar alındı:", response)
+      setPresentations(response)
+    } catch (error) {
+      console.error("Sunumlar alınırken hata oluştu:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const fetchOpenCategories = async () => {
+    if (!selectedGroupContext?.id) return;
+    
+    setIsLoading(true)
+    try {
+      const response = await openCategoriesService.getOpenCategories(selectedGroupContext.id)
+      console.log("Açık kategoriler alındı:", response)
+      setOpenCategories(response)
+    } catch (error) {
+      console.error("Açık kategoriler alınırken hata oluştu:", error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -356,6 +419,7 @@ function GroupDetail() {
       console.log("Açık kategori oluşturuldu:", response)
       setAddOpenCategoriesDialogOpen(false)
       toast.success("Açık kategori başarıyla eklendi")
+      fetchOpenCategories()
       // Kategoriler güncellenecek
     } catch (error) {
       console.error("Açık kategori eklenirken hata oluştu:", error)
@@ -363,6 +427,89 @@ function GroupDetail() {
     } finally {
       setIsLoading(false)
       addOpenCategoriesForm.reset()
+    }
+  }
+
+  const handleDeleteOpenCategory = async (categoryId) => {
+    setIsLoading(true)
+    try {
+      await openCategoriesService.deleteOpenCategory(selectedGroupContext.id, categoryId)
+      toast.success("Açık kategori başarıyla silindi")
+      // Açık kategorileri güncellemek için sayfayı yenileyelim
+      fetchOpenCategories()
+    } catch (error) {
+      console.error("Açık kategori silinirken hata oluştu:", error)
+      toast.error("Açık kategori silinemedi")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Sunum İşlemleri
+  const handleAddPresentation = async (data) => {
+    const presentationData = {
+      ...data,
+      group: selectedGroupContext?.id
+    }
+    setIsLoading(true)
+    try {
+      const response = await presentationsService.createPresentation(presentationData)
+      console.log("Sunum oluşturuldu:", response)
+      setAddPresentationDialogOpen(false)
+      toast.success("Sunum başarıyla eklendi")
+      // Sunumlar güncellenecek
+    } catch (error) {
+      console.error("Sunum eklenirken hata oluştu:", error)
+      toast.error("Sunum eklenemedi")
+    } finally {
+      fetchPresentations()
+      setIsLoading(false)
+      addPresentationForm.reset()
+    }
+  }
+
+  const handleUpdatePresentation = async (data) => {
+    const presentationData = {
+      ...data,
+      group: selectedGroupContext?.id
+    }
+    setIsLoading(true)
+    try {
+      const response = await presentationsService.updatePresentation(selectedPresentation.id, presentationData)
+      console.log("Sunum güncellendi:", response)
+      setUpdatePresentationDialogOpen(false)
+      toast.success("Sunum başarıyla güncellendi")
+      // Sunumlar güncellenecek
+    } catch (error) {
+      console.error("Sunum güncellenirken hata oluştu:", error)
+      toast.error("Sunum güncellenemedi")
+    } finally {
+      fetchPresentations()
+      setIsLoading(false)
+      updatePresentationForm.reset()
+    }
+  }
+
+  const handleUpdatePresentationClick = (presentation) => {
+    setSelectedPresentation(presentation)
+    updatePresentationForm.reset({
+      meeting: presentation.meeting,
+      user: presentation.user
+    })
+    setUpdatePresentationDialogOpen(true)
+  }
+
+  const handleDeletePresentation = async (presentation) => {
+    setIsLoading(true)
+    try {
+      await presentationsService.deletePresentation(presentation.id)
+      toast.success("Sunum başarıyla silindi")
+      fetchPresentations()
+    } catch (error) {
+      console.error("Sunum silinirken hata oluştu:", error)
+      toast.error("Sunum silinemedi")
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -403,11 +550,12 @@ function GroupDetail() {
                 </Button>
             </div>
             <div className="flex w-full flex-col gap-6">
-                <Tabs defaultValue="visitors" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4">
+                <Tabs defaultValue="info" className="w-full">
+                    <TabsList className="grid w-full grid-cols-5">
                         <TabsTrigger value="info">Grup Bilgileri</TabsTrigger>
                         <TabsTrigger value="visitors">Ziyaretçiler</TabsTrigger>
                         <TabsTrigger value="members">Üyeler</TabsTrigger>
+                        <TabsTrigger value="presentations">Sunumlar</TabsTrigger>
                         <TabsTrigger value="openCategories">Açık Kategoriler</TabsTrigger>
                     </TabsList>
                     
@@ -596,18 +744,6 @@ function GroupDetail() {
                             </div>
                           )}
                         </CardContent>
-                        <CardFooter>
-                          {/* <Button onClick={fethVisitors} disabled={isLoading}>
-                            {isLoading ? (
-                              <>
-                                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                                Yükleniyor...
-                              </>
-                            ) : (
-                              <>Yenile</>
-                            )}
-                          </Button> */}
-                        </CardFooter>
                     </Card>
                     </TabsContent>
                     <TabsContent value="members" className="mt-4">
@@ -632,8 +768,8 @@ function GroupDetail() {
                                                             <h4 className="font-medium text-primary">{user.first_name} {user.last_name}</h4>
                                                             <p className="text-sm text-gray-500">{user.email}</p>
                                                         </div>
+                                                        </div>
                                                     </div>
-                                                </div>
                                                 
                                                 {user.roles && user.roles.length > 0 && (
                                                     <div className="mt-3 pt-3 border-t border-gray-100">
@@ -661,6 +797,98 @@ function GroupDetail() {
                             </CardContent>
                         </Card>
                     </TabsContent>
+                    <TabsContent value="presentations" className="mt-4">
+                        <Card>
+                            <CardHeader>
+                            <div className="flex items-center justify-between">
+                                <div className="flex flex-col gap-2">
+                                  <CardTitle>Sunumlar</CardTitle>
+                                  <CardDescription>
+                                      {selectedGroupContext ? `${selectedGroupContext.name} grubu sunum listesi` : 'Sunumlar'}
+                                  </CardDescription>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button onClick={fetchPresentations} disabled={isLoading}>
+                                    {isLoading ? (
+                                      <>
+                                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                                        Yükleniyor...
+                                      </>
+                                    ) : (
+                                      <RefreshCw className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                  <Button variant="default" size="icon" onClick={() => setAddPresentationDialogOpen(true)}>
+                                    <Plus className="h-5 w-5" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardHeader>
+                            <CardContent>
+                              {isLoading ? (
+                                <div className="flex justify-center items-center p-4">
+                                  <div className="flex items-center gap-2">
+                                    <RefreshCw className="h-4 w-4 animate-spin" />
+                                    <p>Yükleniyor...</p>
+                                  </div>
+                                </div>
+                              ) : presentations.length > 0 ? (
+                                <div className="rounded-md border">
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead>Üye</TableHead>
+                                        <TableHead>Toplantı Tarihi</TableHead>
+                                        <TableHead>Oluşturulma Tarihi</TableHead>
+                                        <TableHead className="w-[80px]"></TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {presentations.map((presentation) => (
+                                        <TableRow key={presentation.id}>
+                                          <TableCell className="font-medium">{presentation.user_full_name}</TableCell>
+                                          <TableCell>{new Date(presentation.meeting_date).toLocaleDateString('tr-TR')}</TableCell>
+                                          <TableCell>{new Date(presentation.created_at).toLocaleDateString('tr-TR')}</TableCell>
+                                          <TableCell>
+                                            <DropdownMenu>
+                                              <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                                  <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                              </DropdownMenuTrigger>
+                                              <DropdownMenuContent align="end">
+                                                <DropdownMenuItem
+                                                  onClick={() => handleUpdatePresentationClick(presentation)}
+                                                  variant="default"
+                                                  className="cursor-pointer"
+                                                >
+                                                  <Edit className="mr-2 h-4 w-4" />
+                                                  <span>Düzenle</span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem 
+                                                  onClick={() => handleDeletePresentation(presentation)} 
+                                                  variant="destructive"
+                                                  className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                                                >
+                                                  <Trash2 className="mr-2 h-4 w-4" />
+                                                  Sil
+                                                </DropdownMenuItem>
+                                              </DropdownMenuContent>
+                                            </DropdownMenu>
+                                          </TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                              ) : (
+                                <div className="text-center p-4">
+                                  <p>Henüz sunum bulunmuyor.</p>
+                                </div>
+                              )}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
                     <TabsContent value="openCategories" className="mt-4">
                         <Card>
                             <CardHeader>
@@ -679,16 +907,18 @@ function GroupDetail() {
                               </div>
                             </CardHeader>
                             <CardContent>
-                                {selectedGroupContext && selectedGroupContext.open_categories && selectedGroupContext.open_categories.length > 0 ? (
-                                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-                                        {selectedGroupContext.open_categories.map((category) => (
-                                            <div key={category.id} className="bg-secondary border border-gray-100 rounded-lg shadow-sm p-3 hover:shadow-md transition-all">
+                                {openCategories && openCategories.length > 0 ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        {openCategories.map((category) => (
+                                            <div key={category.id} id={category.id} className="bg-secondary border border-gray-100 rounded-lg shadow-sm p-3 hover:shadow-md transition-all">
                                                 <div className="flex justify-between items-start">
-                                                    <div className="flex items-center gap-3">
+                                                    <div className="flex items-center justify-between gap-3 w-full">
                                                         <div className="">
                                                             {category.name}
                                                         </div>
-                                                        
+                                                        <Button disabled={isLoading} onClick={() => handleDeleteOpenCategory(category.id)} variant="destructive" >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1244,6 +1474,212 @@ function GroupDetail() {
                 </form>
               </Form>
           </DialogContent>
+        </Dialog>
+        <Dialog open={addPresentationDialogOpen} onOpenChange={setAddPresentationDialogOpen}>
+            <DialogContent>
+            <DialogHeader>
+                    <DialogTitle>Yeni Sunum Ekle</DialogTitle>
+                    <DialogDescription>
+                        Sunum bilgilerini girin
+                    </DialogDescription>
+                </DialogHeader>
+                <Form {...addPresentationForm}>
+                  <form onSubmit={addPresentationForm.handleSubmit(handleAddPresentation)} className="space-y-6">
+                    <FormField
+                      control={addPresentationForm.control}
+                      name="group"
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Grup</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  value={selectedGroupContext?.name || ''} 
+                                  disabled 
+                                  className="bg-gray-50"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={addPresentationForm.control}
+                      name="meeting"
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Toplantı</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                      <SelectTrigger>
+                                          <SelectValue placeholder="Toplantı seçiniz" />
+                                      </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                      {loadingMeetings ? (
+                                        <SelectItem value="loading" disabled>
+                                          Yükleniyor...
+                                        </SelectItem>
+                                      ) : groupMeetings.length > 0 ? (
+                                        groupMeetings.map((meeting) => (
+                                          <SelectItem key={meeting.id} value={meeting.id}>
+                                            {new Date(meeting.date).toLocaleDateString('tr-TR')} ({meeting.start_time} - {meeting.end_time})
+                                          </SelectItem>
+                                        ))
+                                      ) : (
+                                        <SelectItem value="no-data" disabled>
+                                          Toplantı bulunamadı
+                                        </SelectItem>
+                                      )}
+                                  </SelectContent>
+                              </Select>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={addPresentationForm.control}
+                      name="user"
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Kullanıcı</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                      <SelectTrigger>
+                                          <SelectValue placeholder="Kullanıcı seçiniz" />
+                                      </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                      {selectedGroupContext?.users?.length > 0 ? (
+                                        selectedGroupContext.users.map((user) => (
+                                          <SelectItem key={user.id} value={user.id}>
+                                            {user.first_name} {user.last_name}
+                                          </SelectItem>
+                                        ))
+                                      ) : (
+                                        <SelectItem value="no-data" disabled>
+                                          Kullanıcı bulunamadı
+                                        </SelectItem>
+                                      )}
+                                  </SelectContent>
+                              </Select>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                    />
+                    <DialogFooter>
+                      <Button 
+                        //onClick={handleSaveEdit} 
+                        disabled={isLoading}
+                      >
+                        {isLoading ? "Kaydediliyor..." : "Kaydet"}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
+        <Dialog open={updatePresentationDialogOpen} onOpenChange={setUpdatePresentationDialogOpen}>
+            <DialogContent>
+            <DialogHeader>
+                    <DialogTitle>Sunumu Düzenle</DialogTitle>
+                    <DialogDescription>
+                        Sunum bilgilerini girin
+                    </DialogDescription>
+                </DialogHeader>
+                <Form {...updatePresentationForm}>
+                  <form onSubmit={updatePresentationForm.handleSubmit(handleUpdatePresentation)} className="space-y-6">
+                    <FormField
+                      control={updatePresentationForm.control}
+                      name="group"
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Grup</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  value={selectedGroupContext?.name || ''} 
+                                  disabled 
+                                  className="bg-gray-50"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={updatePresentationForm.control}
+                      name="meeting"
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Toplantı</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                      <SelectTrigger>
+                                          <SelectValue placeholder="Toplantı seçiniz" />
+                                      </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                      {loadingMeetings ? (
+                                        <SelectItem value="loading" disabled>
+                                          Yükleniyor...
+                                        </SelectItem>
+                                      ) : groupMeetings.length > 0 ? (
+                                        groupMeetings.map((meeting) => (
+                                          <SelectItem key={meeting.id} value={meeting.id}>
+                                            {new Date(meeting.date).toLocaleDateString('tr-TR')} ({meeting.start_time} - {meeting.end_time})
+                                          </SelectItem>
+                                        ))
+                                      ) : (
+                                        <SelectItem value="no-data" disabled>
+                                          Toplantı bulunamadı
+                                        </SelectItem>
+                                      )}
+                                  </SelectContent>
+                              </Select>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={updatePresentationForm.control}
+                      name="user"
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Kullanıcı</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                      <SelectTrigger>
+                                          <SelectValue placeholder="Kullanıcı seçiniz" />
+                                      </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                      {selectedGroupContext?.users?.length > 0 ? (
+                                        selectedGroupContext.users.map((user) => (
+                                          <SelectItem key={user.id} value={user.id}>
+                                            {user.first_name} {user.last_name}
+                                          </SelectItem>
+                                        ))
+                                      ) : (
+                                        <SelectItem value="no-data" disabled>
+                                          Kullanıcı bulunamadı
+                                        </SelectItem>
+                                      )}
+                                  </SelectContent>
+                              </Select>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                    />
+                    <DialogFooter>
+                      <Button 
+                        //onClick={handleSaveEdit} 
+                        disabled={isLoading}
+                      >
+                        {isLoading ? "Kaydediliyor..." : "Kaydet"}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+            </DialogContent>
         </Dialog>
         <Dialog open={addOpenCategoriesDialogOpen} onOpenChange={setAddOpenCategoriesDialogOpen}>
             <DialogContent>

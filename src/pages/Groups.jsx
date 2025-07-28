@@ -117,9 +117,9 @@ function Groups() {
         end_time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/, {
             message: "Geçerli bir bitiş saati giriniz (HH:MM:SS).",
         }),
-        meeting_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
-            message: "Geçerli bir toplantı tarihi giriniz (YYYY-AA-GG).",
-        }),
+        // meeting_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
+        //     message: "Geçerli bir toplantı tarihi giriniz (YYYY-AA-GG).",
+        // }),
         term_start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
             message: "Geçerli bir dönem başlangıç tarihi giriniz (YYYY-AA-GG).",
         }),
@@ -170,7 +170,7 @@ function Groups() {
             meeting_day: "",
             start_time: "08:30:00",
             end_time: "10:30:00",
-            meeting_date: "",
+            // meeting_date: "",
             term_start: "",
             term_end: "",
         },
@@ -185,7 +185,7 @@ function Groups() {
             meeting_day: "",
             start_time: "08:30:00",
             end_time: "10:30:00",
-            meeting_date: "",
+            // meeting_date: "",
             term_start: "",
             term_end: "",
         },
@@ -882,7 +882,7 @@ function Groups() {
                                     )}
                                 />
                             </div>
-                            <FormField
+                            {/* <FormField
                                 control={form.control}
                                 name="meeting_date"
                                 render={({ field }) => (
@@ -927,7 +927,7 @@ function Groups() {
                                         <FormMessage />
                                     </FormItem>
                                 )}
-                            />
+                            /> */}
                             <div className="grid grid-cols-2 gap-4">
                                 <FormField
                                     control={form.control}
@@ -1186,7 +1186,7 @@ function Groups() {
                                         )}
                                     />
                                 </div>
-                                <FormField
+                                {/* <FormField
                                     control={updateGroupForm.control}
                                     name="meeting_date"
                                     render={({ field }) => (
@@ -1231,7 +1231,7 @@ function Groups() {
                                             <FormMessage />
                                         </FormItem>
                                     )}
-                                />
+                                /> */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <FormField
                                         control={updateGroupForm.control}

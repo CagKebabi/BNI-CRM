@@ -43,8 +43,14 @@ export const ENDPOINTS = {
   // Group Meetings endpoints
   GET_GROUP_MEETINGS: (groupId) => `/organization/meetings/?group=${groupId}`,
   // Open Categories endpoints
+  GET_OPEN_CATEGORIES: (groupId) => `/organization/groups/${groupId}/open-categories/`, 
   CREATE_OPEN_CATEGORY: (id) => `/organization/groups/${id}/add-open-category/`,
-  DELETE_OPEN_CATEGORY: (groupId, categoryId) => `/organization/groups/${id}/remove-open-category/${categoryId}/`,
+  DELETE_OPEN_CATEGORY: (groupId, categoryId) => `/organization/groups/${groupId}/remove-open-category/${categoryId}/`,
+  // Presentations endpoints
+  GET_PRESENTATIONS: (id) => `/organization/presentations/?group=${id}`,
+  CREATE_PRESENTATION: '/organization/presentations/',
+  UPDATE_PRESENTATION: (id) => `/organization/presentations/${id}/`,
+  DELETE_PRESENTATION: (id) => `/organization/presentations/${id}/`,
 };
 
 // API istekleri için varsayılan ayarlar
