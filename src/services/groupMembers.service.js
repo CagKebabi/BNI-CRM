@@ -2,6 +2,16 @@ import { ENDPOINTS } from "../api/config";
 import { apiService } from "./api.service";
 
 class GroupMembersService {
+    async getGroupMembers(id) {
+        try {
+            const response = await apiService.get(ENDPOINTS.GET_GROUP_MEMBERS(id));
+            console.log("Grup üyeleri alındı:", response);
+            return response;
+        } catch (error) {
+            console.error("Grup üyeleri alınamadı:", error);
+            throw error;
+        }
+    }
     async addMemberToGroup(id, data) {
         try {
             const response = await apiService.post(ENDPOINTS.ADD_MEMBER_TO_GROUP(id), data);

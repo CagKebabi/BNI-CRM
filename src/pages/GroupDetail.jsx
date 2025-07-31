@@ -162,6 +162,7 @@ function GroupDetail() {
   const [presentations, setPresentations] = useState([])
   const [roles, setRoles] = useState([]);
   const [users, setUsers] = useState([]);
+  const [groupMembers, setGroupMembers] = useState([])
   const [openCategories, setOpenCategories] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [selectedVisitor, setSelectedVisitor] = useState(null)
@@ -265,6 +266,7 @@ function GroupDetail() {
     fetchOpenCategories()
     fetchRoles()
     fetchUsers()
+    fetchGroupMembers()
   }, [selectedGroupContext, navigate])
 
   const fethVisitors = async () => {
@@ -341,6 +343,7 @@ function GroupDetail() {
   };
 
   const fetchUsers = async () => {
+    if (!selectedGroupContext?.id) return;
     try {
       const response = await usersService.getUsers();
       console.log("Kullanıcı listesi alındı:", response);
@@ -351,6 +354,21 @@ function GroupDetail() {
       setIsLoading(false);
     }
   };
+
+  const fetchGroupMembers = async () => {
+    if (!selectedGroupContext?.id) return;
+    
+    setIsLoading(true)
+    try {
+      const response = await groupMembersService.getGroupMembers(selectedGroupContext.id)
+      setGroupMembers(response.members)
+      console.log("GRUP ÜYELERİ ALINDI:", groupMembers)
+    } catch (error) {
+      console.error("Açık kategoriler alınırken hata oluştu:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
 
   // Ziyaretçi İşlemleri
@@ -470,7 +488,7 @@ function GroupDetail() {
         await groupMembersService.addMemberToGroup(selectedGroupContext.id, data);
         toast.success('Grup üyesi başarıyla eklendi');
         setIsLoading(false);
-        //fetchGroups(); // Refresh the list
+        fetchGroupMembers(); // Refresh the list
     } catch (error) {
         console.error('Error adding group member:', error);
         toast.error('Grup üyesi ekleme hatası - Üye başka bir gruba ait olabilir');
@@ -844,7 +862,7 @@ function GroupDetail() {
                             </div>
                             </CardHeader>
                             <CardContent>
-                                {selectedGroupContext && selectedGroupContext.users && selectedGroupContext.users.length > 0 ? (
+                                {groupMembers && groupMembers.length > 0 ? (
                                     <div className="rounded-md border">
                                         <Table>
                                             <TableHeader>
@@ -859,7 +877,7 @@ function GroupDetail() {
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
-                                                {selectedGroupContext.users.map((user) => (
+                                                {groupMembers.map((user) => (
                                                     <TableRow key={user.id}>
                                                         <TableCell className="font-medium">
                                                             <div className="flex items-center gap-3">
