@@ -4,6 +4,9 @@ import { visitsService } from "../services/visits.service"
 import { groupMeetingsService } from "../services/groupMeetings.service"
 import { openCategoriesService } from "../services/openCategories.service"
 import { presentationsService } from "../services/presentations.service"
+import { groupMembersService } from "../services/groupMembers.service"
+import { rolesService } from "../services/roles.service"
+import { usersService } from "../services/users.service"
 import { useGroup } from "../contexts/GroupContext"
 import { useUser } from "@/contexts/UserContext"
 import * as z from 'zod'
@@ -127,6 +130,15 @@ const addNoteFormSchema = z.object({
     }),
 });
 
+const addGroupMembersFormSchema = z.object({
+    user_id: z.string().uuid({
+        message: "Kullanıcı seçiniz.",
+    }),
+    role_id: z.string().uuid({
+        message: "Rol seçiniz.",
+    }),
+});
+
 const addOpenCategoriesFormSchema = z.object({
     name: z.string().min(2, {
         message: "Kategori adı en az 2 karakter olmalıdır.",
@@ -148,6 +160,8 @@ function GroupDetail() {
   const { userId } = useUser();
   const [visitors, setVisitors] = useState([])
   const [presentations, setPresentations] = useState([])
+  const [roles, setRoles] = useState([]);
+  const [users, setUsers] = useState([]);
   const [openCategories, setOpenCategories] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [selectedVisitor, setSelectedVisitor] = useState(null)
@@ -155,6 +169,8 @@ function GroupDetail() {
   const [updateVisitorDialogOpen, setUpdateVisitorDialogOpen] = useState(false)
   const [deleteVisitorDialogOpen, setDeleteVisitorDialogOpen] = useState(false)
   const [addNoteDialogOpen, setAddNoteDialogOpen] = useState(false)
+  const [addGroupMemberDialogOpen, setAddGroupMemberDialogOpen] = useState(false)
+  const [updateGroupMemberDialogOpen, setUpdateGroupMemberDialogOpen] = useState(false)
   const [addPresentationDialogOpen, setAddPresentationDialogOpen] = useState(false)
   const [updatePresentationDialogOpen, setUpdatePresentationDialogOpen] = useState(false)
   const [selectedPresentation, setSelectedPresentation] = useState(null)
@@ -205,6 +221,14 @@ function GroupDetail() {
     },
   })
 
+  const addGroupMembersForm = useForm({
+    resolver: zodResolver(addGroupMembersFormSchema),
+    defaultValues: {
+        user_id: "",
+        role_id: "",
+    },
+  });
+
   const addOpenCategoriesForm = useForm({
     resolver: zodResolver(addOpenCategoriesFormSchema),
     defaultValues: {
@@ -239,6 +263,8 @@ function GroupDetail() {
     fetchGroupMeetings()
     fetchPresentations()
     fetchOpenCategories()
+    fetchRoles()
+    fetchUsers()
   }, [selectedGroupContext, navigate])
 
   const fethVisitors = async () => {
@@ -301,6 +327,30 @@ function GroupDetail() {
       setIsLoading(false)
     }
   }
+
+  const fetchRoles = async () => {
+    try {
+      const response = await rolesService.getRoles();
+      console.log("Rol listesi alındı:", response);
+      setRoles(response);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Rol listesi alınamadı:", error);
+      setIsLoading(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const response = await usersService.getUsers();
+      console.log("Kullanıcı listesi alındı:", response);
+      setUsers(response);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Kullanıcı listesi alınamadı:", error);
+      setIsLoading(false);
+    }
+  };
 
 
   // Ziyaretçi İşlemleri
@@ -410,6 +460,26 @@ function GroupDetail() {
       setIsLoading(false)
     }
   }
+
+  // Grup Üyeleri İşlemleri
+  const handleAddGroupMember = async (data) => {
+    setIsLoading(true);
+    try {
+        if (!data.user_id.trim() || !data.role_id.trim()) return;
+        console.log(data);
+        await groupMembersService.addMemberToGroup(selectedGroupContext.id, data);
+        toast.success('Grup üyesi başarıyla eklendi');
+        setIsLoading(false);
+        //fetchGroups(); // Refresh the list
+    } catch (error) {
+        console.error('Error adding group member:', error);
+        toast.error('Grup üyesi ekleme hatası - Üye başka bir gruba ait olabilir');
+    } finally {
+        setIsLoading(false);
+        setAddGroupMemberDialogOpen(false);
+        addGroupMembersForm.reset();
+    }
+  };
 
   // Açık Kategoriler İşlemleri
   const handleAddOpenCategory = async (data) => {
@@ -609,29 +679,29 @@ function GroupDetail() {
                     <TabsContent value="visitors" className="mt-4">
                     <Card>
                         <CardHeader>
-                        <div className='flex items-center justify-between'>
-                          <div className='flex flex-col gap-2'>
-                            <CardTitle>Ziyaretçiler</CardTitle>
-                            <CardDescription>
-                                Gruba gelen ziyaretçilerin listesi
-                            </CardDescription>
+                          <div className='flex items-center justify-between'>
+                            <div className='flex flex-col gap-2'>
+                              <CardTitle>Ziyaretçiler</CardTitle>
+                              <CardDescription>
+                                  Gruba gelen ziyaretçilerin listesi
+                              </CardDescription>
+                            </div>
+                            <div className='flex gap-2'> 
+                              <Button onClick={fethVisitors} disabled={isLoading}>
+                                {isLoading ? (
+                                  <>
+                                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                                    Yükleniyor...
+                                  </>
+                                ) : (
+                                  <RefreshCw className="h-4 w-4" />
+                                )}
+                              </Button>
+                              <Button variant="default" size="icon" onClick={() => setAddVisitorDialogOpen(true)}>
+                                  <Plus className="h-5 w-5" />
+                              </Button>
+                            </div>
                           </div>
-                          <div className='flex gap-2'> 
-                            <Button onClick={fethVisitors} disabled={isLoading}>
-                              {isLoading ? (
-                                <>
-                                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                                  Yükleniyor...
-                                </>
-                              ) : (
-                                <RefreshCw className="h-4 w-4" />
-                              )}
-                            </Button>
-                            <Button variant="default" size="icon" onClick={() => setAddVisitorDialogOpen(true)}>
-                                <Plus className="h-5 w-5" />
-                            </Button>
-                          </div>
-                        </div>
                         </CardHeader>
                         <CardContent>
                           {isLoading ? (
@@ -749,48 +819,132 @@ function GroupDetail() {
                     <TabsContent value="members" className="mt-4">
                         <Card>
                             <CardHeader>
+                            <div className='flex items-center justify-between'>
+                              <div className='flex flex-col gap-2'>
                                 <CardTitle>Üyeler</CardTitle>
                                 <CardDescription>
                                     {selectedGroupContext ? `${selectedGroupContext.name} grubu üye listesi` : 'Grup üyeleri'}
                                 </CardDescription>
+                              </div>
+                              <div className='flex gap-2'> 
+                                <Button onClick={fethVisitors} disabled={isLoading}>
+                                  {isLoading ? (
+                                    <>
+                                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                                      Yükleniyor...
+                                    </>
+                                  ) : (
+                                    <RefreshCw className="h-4 w-4" />
+                                  )}
+                                </Button>
+                                <Button variant="default" size="icon" onClick={() => setAddGroupMemberDialogOpen(true)}>
+                                    <Plus className="h-5 w-5" />
+                                </Button>
+                              </div>
+                            </div>
                             </CardHeader>
                             <CardContent>
                                 {selectedGroupContext && selectedGroupContext.users && selectedGroupContext.users.length > 0 ? (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {selectedGroupContext.users.map((user) => (
-                                            <div key={user.id} className="bg-secondary border border-gray-100 rounded-lg shadow-sm p-3 hover:shadow-md transition-all">
-                                                <div className="flex justify-between items-start">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 bg-indigo-200 rounded-full flex items-center justify-center text-sm font-medium text-indigo-700">
-                                                            {user.first_name?.charAt(0).toUpperCase()}{user.last_name?.charAt(0).toUpperCase()}
-                                                        </div>
-                                                        <div>
-                                                            <h4 className="font-medium text-primary">{user.first_name} {user.last_name}</h4>
-                                                            <p className="text-sm text-gray-500">{user.email}</p>
-                                                        </div>
-                                                        </div>
-                                                    </div>
-                                                
-                                                {user.roles && user.roles.length > 0 && (
-                                                    <div className="mt-3 pt-3 border-t border-gray-100">
-                                                        <p className="text-xs font-medium text-gray-500 mb-2">Roller</p>
-                                                        <div className="flex flex-wrap gap-2">
-                                                            {user.roles.map((role) => (
-                                                                <div key={role.id} className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs flex items-center gap-1">
-                                                                    <span className="font-medium">{role.role}</span>
-                                                                    {role.category && (
-                                                                        <span className="text-indigo-500 bg-indigo-100 px-1.5 py-0.5 rounded-full text-[10px]">{role.category}</span>
-                                                                    )}
+                                    <div className="rounded-md border">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead>Üye</TableHead>
+                                                    <TableHead>E-posta</TableHead>
+                                                    <TableHead>Roller</TableHead>
+                                                    <TableHead>Kategori</TableHead>
+                                                    <TableHead>Durum</TableHead>
+                                                    <TableHead className="w-[80px]"></TableHead>
+
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {selectedGroupContext.users.map((user) => (
+                                                    <TableRow key={user.id}>
+                                                        <TableCell className="font-medium">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-8 h-8 bg-indigo-200 rounded-full flex items-center justify-center text-sm font-medium text-indigo-700">
+                                                                    {user.first_name?.charAt(0).toUpperCase()}{user.last_name?.charAt(0).toUpperCase()}
                                                                 </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
+                                                                <span>{user.first_name} {user.last_name}</span>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>{user.email}</TableCell>
+                                                        <TableCell>
+                                                            {user.roles && user.roles.length > 0 ? (
+                                                                <div className="flex flex-wrap gap-1">
+                                                                    {user.roles.map((role) => (
+                                                                        <span key={role.id} className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-full text-xs font-medium">
+                                                                            {role.role}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-gray-400 text-sm">Rol atanmamış</span>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {user.roles && user.roles.length > 0 ? (
+                                                                <div className="flex flex-wrap gap-1">
+                                                                    {user.roles.map((role) => (
+                                                                        role.category && (
+                                                                            <span key={`${role.id}-category`} className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">
+                                                                                {role.category}
+                                                                            </span>
+                                                                        )
+                                                                    ))}
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-gray-400 text-sm">-</span>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                                                                Aktif
+                                                            </span>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                          <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                                                <MoreHorizontal className="h-4 w-4" />
+                                                              </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end">
+                                                              <DropdownMenuItem
+                                                                onClick={() => handleVisitorClick(visitor, "update")}
+                                                                variant="default"
+                                                                className="cursor-pointer"
+                                                              >
+                                                                <Edit className="mr-2 h-4 w-4" />
+                                                                <span>Düzenle</span>
+                                                              </DropdownMenuItem>
+                                                              <DropdownMenuItem
+                                                                onClick={() => handleVisitorClick(visitor, "addNote")}
+                                                                variant="default"
+                                                                className="cursor-pointer"
+                                                              >
+                                                                <Plus className="mr-2 h-4 w-4" />
+                                                                <span>Not Ekle</span>
+                                                              </DropdownMenuItem>
+                                                              <DropdownMenuItem 
+                                                                onClick={() => handleVisitorClick(visitor, "delete")} 
+                                                                variant="destructive"
+                                                                className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                                                              >
+                                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                                Sil
+                                                              </DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                          </DropdownMenu>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
                                     </div>
                                 ) : (
-                                    <div className="text-center py-8">
+                                    <div className="text-center p-4">
                                         <p>Bu grupta henüz üye bulunmamaktadır.</p>
                                     </div>
                                 )}
@@ -1474,6 +1628,76 @@ function GroupDetail() {
                 </form>
               </Form>
           </DialogContent>
+        </Dialog>
+        <Dialog open={addGroupMemberDialogOpen} onOpenChange={setAddGroupMemberDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Gruba Üye Ekle</DialogTitle>
+                    <DialogDescription>
+                        Yeni bir üye ekleyin
+                    </DialogDescription>
+                </DialogHeader>
+                <Form {...addGroupMembersForm}>
+                    <form onSubmit={addGroupMembersForm.handleSubmit(handleAddGroupMember)} className="space-y-4">
+                        <FormField
+                            control={addGroupMembersForm.control}
+                            name="user_id"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Kullanıcı</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Kullanıcı seçiniz" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {users.map((user) => (
+                                                    <SelectItem key={user.id} value={user.id}>
+                                                        {user.first_name + " " + user.last_name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={addGroupMembersForm.control}
+                                name="role_id"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Rol</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Rol seçiniz" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {roles.map((role) => (
+                                                    <SelectItem key={role.id} value={role.id}>
+                                                        {role.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <DialogFooter>
+                                <Button 
+                                //onClick={handleSaveEdit} 
+                                disabled={isLoading}
+                                >
+                                    {isLoading ? "Kaydediliyor..." : "Kaydet"}
+                                </Button>
+                            </DialogFooter>
+                    </form>
+                </Form>
+            </DialogContent>
         </Dialog>
         <Dialog open={addPresentationDialogOpen} onOpenChange={setAddPresentationDialogOpen}>
             <DialogContent>
