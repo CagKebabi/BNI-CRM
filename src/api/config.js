@@ -35,6 +35,8 @@ export const ENDPOINTS = {
   ADD_MEMBER_TO_GROUP: (groupId) => `/organization/groups/${groupId}/add-member/`,
   UPDATE_GROUP_MEMBER: (id) => `/organization/groups/${id}/update-member-role/`,
   DELETE_MEMBER_ROLE: (id) => `/organization/groups/${id}/remove-member-role/`,
+  GET_GROUP_LEADER_TEAM: (id) => `/organization/groups/${id}/leader-team/`,
+  GET_GROUP_GOLD_MEMBERS: (id) => `/organization/groups/${id}/gold-members/`,
   // Visits endpoints
   GET_VISITS: '/visits/visitors/',
   CREATE_VISIT: '/visits/visitors/',

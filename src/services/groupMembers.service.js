@@ -12,6 +12,29 @@ class GroupMembersService {
             throw error;
         }
     }
+
+    async getGroupLeaderTeam(id) {
+        try {
+            const response = await apiService.get(ENDPOINTS.GET_GROUP_LEADER_TEAM(id));
+            console.log("Grup lider ekibi alındı:", response);
+            return response;
+        } catch (error) {
+            console.error("Grup lider ekibi alınamadı:", error);
+            throw error;
+        }
+    }
+
+    async getGroupGoldMembers(id) {
+        try {
+            const response = await apiService.get(ENDPOINTS.GET_GROUP_GOLD_MEMBERS(id));
+            console.log("Grup altın üyeleri alındı:", response);
+            return response;
+        } catch (error) {
+            console.error("Grup altın üyeleri alınamadı:", error);
+            throw error;
+        }
+    }
+
     async addMemberToGroup(id, data) {
         try {
             const response = await apiService.post(ENDPOINTS.ADD_MEMBER_TO_GROUP(id), data);

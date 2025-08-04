@@ -88,7 +88,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
-import { MoreHorizontal, Edit, Trash2, RefreshCw, Plus, CalendarIcon, Users, MapPin, Clock, Timer, Undo2 } from "lucide-react"
+import { MoreHorizontal, Edit, Trash2, RefreshCw, Plus, CalendarIcon, Users, MapPin, Clock, Timer, Undo2, User } from "lucide-react"
 
 const addVisitorFormSchema = z.object({
     visit_date: z.string(),
@@ -139,6 +139,12 @@ const addGroupMembersFormSchema = z.object({
     }),
 });
 
+const updateGroupMemberFormSchema = z.object({
+    role_id: z.string().uuid({
+        message: "Yeni rol seçiniz.",
+    }),
+})
+
 const addOpenCategoriesFormSchema = z.object({
     name: z.string().min(2, {
         message: "Kategori adı en az 2 karakter olmalıdır.",
@@ -163,6 +169,8 @@ function GroupDetail() {
   const [roles, setRoles] = useState([]);
   const [users, setUsers] = useState([]);
   const [groupMembers, setGroupMembers] = useState([])
+  const [filteredGroupMembers, setFilteredGroupMembers] = useState([])
+  const [memberFilter, setMemberFilter] = useState('all')
   const [openCategories, setOpenCategories] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [selectedVisitor, setSelectedVisitor] = useState(null)
@@ -172,6 +180,7 @@ function GroupDetail() {
   const [addNoteDialogOpen, setAddNoteDialogOpen] = useState(false)
   const [addGroupMemberDialogOpen, setAddGroupMemberDialogOpen] = useState(false)
   const [updateGroupMemberDialogOpen, setUpdateGroupMemberDialogOpen] = useState(false)
+  const [selectedGroupMember, setSelectedGroupMember] = useState(null);
   const [addPresentationDialogOpen, setAddPresentationDialogOpen] = useState(false)
   const [updatePresentationDialogOpen, setUpdatePresentationDialogOpen] = useState(false)
   const [selectedPresentation, setSelectedPresentation] = useState(null)
@@ -228,6 +237,14 @@ function GroupDetail() {
         user_id: "",
         role_id: "",
     },
+  });
+
+  // Update Group Members Form tanımlaması
+  const updateGroupMemberForm = useForm({
+      resolver: zodResolver(updateGroupMemberFormSchema),
+      defaultValues: {
+          role_id: "",
+      },
   });
 
   const addOpenCategoriesForm = useForm({
@@ -362,14 +379,49 @@ function GroupDetail() {
     try {
       const response = await groupMembersService.getGroupMembers(selectedGroupContext.id)
       setGroupMembers(response.members)
-      console.log("GRUP ÜYELERİ ALINDI:", groupMembers)
+      setFilteredGroupMembers(response.members)
+      setMemberFilter('all')
+      console.log("GRUP ÜYELERİ ALINDI:", response.members)
     } catch (error) {
-      console.error("Açık kategoriler alınırken hata oluştu:", error)
+      console.error("Grup üyeleri alınırken hata oluştu:", error)
     } finally {
       setIsLoading(false)
     }
   }
 
+  // Client-side filtreleme fonksiyonu
+  const filterGroupMembers = (filterType) => {
+    setMemberFilter(filterType)
+    
+    let filtered = [];
+    
+    switch (filterType) {
+      case 'all':
+        filtered = groupMembers
+        break;
+      case 'gold':
+        // Gold Member rolüne sahip üyeleri filtrele
+        filtered = groupMembers.filter(member => 
+          member.roles && member.roles.some(role => 
+            role.role && role.role.toLowerCase().includes('gold member')
+          )
+        )
+        break;
+      case 'leader':
+        // Lider Ekip kategorisine sahip üyeleri filtrele
+        filtered = groupMembers.filter(member => 
+          member.roles && member.roles.some(role => 
+            role.category && role.category.toLowerCase().includes('lider ekip')
+          )
+        )
+        break;
+      default:
+        filtered = groupMembers
+    }
+    
+    setFilteredGroupMembers(filtered)
+    console.log(`${filterType} üyeleri filtrelendi:`, filtered)
+  }
 
   // Ziyaretçi İşlemleri
   const handleAddVisitor = async (data) => {
@@ -499,6 +551,78 @@ function GroupDetail() {
     }
   };
 
+  const handleUpdateGroupMember = async (data) => {
+    setIsLoading(true);
+    console.log(data);
+    const updatedData = {
+        user_id: selectedGroupMember.id,
+        role_id: data.role_id,
+    };
+    try {
+        if (!updatedData.user_id.trim() || !updatedData.role_id.trim()) return;
+        console.log(updatedData);
+        await groupMembersService.addMemberToGroup(selectedGroupContext.id, updatedData);
+        toast.success('Grup üyesi başarıyla güncellendi');
+        setIsLoading(false);
+        fetchGroupMembers(); // Refresh the list
+    } catch (error) {
+        console.error('Error updating group member:', error);
+        toast.error('Grup üyesi güncellenemedi');
+    } finally {
+        setIsLoading(false);
+        setUpdateGroupMemberDialogOpen(false);
+        updateGroupMemberForm.reset();
+    }
+  };
+
+  const updateGroupMemberClick = (user) => {
+    setSelectedGroupMember(user);
+    console.log(user);
+    setUpdateGroupMemberDialogOpen(true);
+    updateGroupMemberForm.reset({
+        user_id: user.user_id,
+        old_role_name: user.role_name,
+        new_role_name: user.role_name,
+    });
+  };
+
+  const handleDeleteGroupMemberRole = async (role_id, user_id) => {
+    setIsLoading(true);        
+    const data = {
+        user_id: user_id,
+        role_id: role_id,
+    };
+    try {
+        await groupMembersService.deleteGroupMemberRole(selectedGroupContext.id, data);
+        toast.success('Rol başarıyla silindi');
+        setIsLoading(false);
+        fetchGroupMembers(); // Refresh the list
+    } catch (error) {
+        console.error('Error deleting group member role:', error);
+        toast.error('Rol silinemedi');
+    } finally {
+        setIsLoading(false);
+        setUpdateGroupMemberDialogOpen(false);
+        updateGroupMemberForm.reset();
+    }
+  };
+
+  const handleRemoveGroupMember = async (user_id) => {
+    setIsLoading(true);
+    try {
+      const response = await usersService.updateUser(user_id, { group_id: null });
+      console.log("Üye silindi:", response);
+      toast.success("Üye başarıyla silindi");
+      setIsLoading(false);
+      fetchGroupMembers();
+    } catch (error) {
+      console.error("Error removing group member:", error);
+      toast.error("Üye silinemedi");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Açık Kategoriler İşlemleri
   const handleAddOpenCategory = async (data) => {
     setIsLoading(true)
@@ -607,10 +731,6 @@ function GroupDetail() {
             <div className='flex justify-between items-center mb-6'>
                 <div>
                   <div>
-                      {/* <h1 className="text-2xl font-bold">{selectedGroupContext?.name || 'Grup Detayı'}</h1>
-                      {selectedGroupContext && (
-                          <p className="text-gray-500 mt-1">{selectedGroupContext.region_name} Bölgesi</p>
-                      )} */}
                       <div className="flex items-center gap-2 text-lg font-semibold">
                         <div className="p-2 rounded-lg bg-blue-50">
                           <Users className="h-5 w-5 text-blue-600" />
@@ -844,8 +964,8 @@ function GroupDetail() {
                                     {selectedGroupContext ? `${selectedGroupContext.name} grubu üye listesi` : 'Grup üyeleri'}
                                 </CardDescription>
                               </div>
-                              <div className='flex gap-2'> 
-                                <Button onClick={fethVisitors} disabled={isLoading}>
+                              <div className='flex items-center gap-2'> 
+                                <Button onClick={fetchGroupMembers} disabled={isLoading}>
                                   {isLoading ? (
                                     <>
                                       <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
@@ -862,7 +982,22 @@ function GroupDetail() {
                             </div>
                             </CardHeader>
                             <CardContent>
-                                {groupMembers && groupMembers.length > 0 ? (
+                                <div className="flex items-center justify-between mb-4">
+                                  <div className="flex items-center gap-2">
+                                    <Label htmlFor="member-filter" className="text-sm font-medium">Filtre:</Label>
+                                    <Select onValueChange={(value) => filterGroupMembers(value)} value={memberFilter}>
+                                      <SelectTrigger className="w-[140px]">
+                                          <SelectValue placeholder="Üye Tipi" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                          <SelectItem value="all">Tüm Üyeler</SelectItem>
+                                          <SelectItem value="gold">Altın Üyeler</SelectItem>
+                                          <SelectItem value="leader">Lider Ekip</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                </div>
+                                {filteredGroupMembers && filteredGroupMembers.length > 0 ? (
                                     <div className="rounded-md border">
                                         <Table>
                                             <TableHeader>
@@ -877,7 +1012,7 @@ function GroupDetail() {
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
-                                                {groupMembers.map((user) => (
+                                                {filteredGroupMembers.map((user) => (
                                                     <TableRow key={user.id}>
                                                         <TableCell className="font-medium">
                                                             <div className="flex items-center gap-3">
@@ -930,23 +1065,15 @@ function GroupDetail() {
                                                             </DropdownMenuTrigger>
                                                             <DropdownMenuContent align="end">
                                                               <DropdownMenuItem
-                                                                onClick={() => handleVisitorClick(visitor, "update")}
+                                                                onClick={() => updateGroupMemberClick(user)}
                                                                 variant="default"
                                                                 className="cursor-pointer"
                                                               >
                                                                 <Edit className="mr-2 h-4 w-4" />
                                                                 <span>Düzenle</span>
                                                               </DropdownMenuItem>
-                                                              <DropdownMenuItem
-                                                                onClick={() => handleVisitorClick(visitor, "addNote")}
-                                                                variant="default"
-                                                                className="cursor-pointer"
-                                                              >
-                                                                <Plus className="mr-2 h-4 w-4" />
-                                                                <span>Not Ekle</span>
-                                                              </DropdownMenuItem>
                                                               <DropdownMenuItem 
-                                                                onClick={() => handleVisitorClick(visitor, "delete")} 
+                                                                onClick={() => handleRemoveGroupMember(user.id)} 
                                                                 variant="destructive"
                                                                 className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
                                                               >
@@ -1715,6 +1842,68 @@ function GroupDetail() {
                             </DialogFooter>
                     </form>
                 </Form>
+            </DialogContent>
+        </Dialog>
+        <Dialog open={updateGroupMemberDialogOpen} onOpenChange={setUpdateGroupMemberDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Grup Üyesi Düzenle</DialogTitle>
+                    <DialogDescription>
+                        <span className="font-bold">{selectedGroupMember && selectedGroupMember.first_name + " " + selectedGroupMember.last_name} </span>Grup üyesinin rollerini düzenleyin.
+                    </DialogDescription>
+                </DialogHeader>
+                <Form {...updateGroupMemberForm}>
+                    <form onSubmit={updateGroupMemberForm.handleSubmit(handleUpdateGroupMember)} className="space-y-4">
+                        <div className='flex items-end justify-between'>
+                            <FormField
+                                control={updateGroupMemberForm.control}
+                                name="role_id"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Rol Ekle</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Rol Seçiniz" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {roles.map((role) => (
+                                                    <SelectItem key={role.id} value={role.id}>
+                                                        {role.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <DialogFooter>
+                                <Button 
+                                disabled={isLoading}
+                                >
+                                    {isLoading ? "Kaydediliyor..." : "Kaydet"}
+                                </Button>
+                            </DialogFooter>
+                        </div>
+                    </form>
+                </Form>
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-3">
+                        {selectedGroupMember && Array.isArray(selectedGroupMember.roles) && selectedGroupMember.roles.map((role) => (
+                            <div key={role.id} className="rounded-md border bg-card hover:bg-accent/10 transition-colors">
+                                <div className="flex items-center p-3 justify-between">
+                                    <div className='flex items-center'>
+                                        <User className="h-4 w-4 mr-2 text-primary" />
+                                            <span>{role.role} - {role.category}</span> 
+                                        </div>
+                                        <div>
+                                            <Button disabled={isLoading} onClick={() => handleDeleteGroupMemberRole(role.role_id, selectedGroupMember.id)} variant="destructive" >
+                                              <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                      </div>
+                                </div>
+                            ))}
+                    </div>
             </DialogContent>
         </Dialog>
         <Dialog open={addPresentationDialogOpen} onOpenChange={setAddPresentationDialogOpen}>
