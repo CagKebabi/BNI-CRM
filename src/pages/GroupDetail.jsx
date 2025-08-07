@@ -611,13 +611,12 @@ function GroupDetail() {
     setIsLoading(true);
     try {
       const response = await usersService.updateUser(user_id, { group_id: null });
-      console.log("Üye silindi:", response);
-      toast.success("Üye başarıyla silindi");
+      toast.success("Üye gruptan çıkarıldı");
       setIsLoading(false);
       fetchGroupMembers();
     } catch (error) {
       console.error("Error removing group member:", error);
-      toast.error("Üye silinemedi");
+      toast.error("Üye gruptan çıkarılamadı");
     } finally {
       setIsLoading(false);
     }
@@ -1078,7 +1077,7 @@ function GroupDetail() {
                                                                 className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
                                                               >
                                                                 <Trash2 className="mr-2 h-4 w-4" />
-                                                                Sil
+                                                                Gruptan Çıkar
                                                               </DropdownMenuItem>
                                                             </DropdownMenuContent>
                                                           </DropdownMenu>
