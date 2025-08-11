@@ -58,6 +58,14 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from "../components/ui/tooltip";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+  } from "@/components/ui/table"
 import { Calendar } from "../components/ui/calendar";
 import {
     Popover,
@@ -531,6 +539,21 @@ function Groups() {
         }
     };
 
+    const handleRemoveGroupMember = async (user_id) => {
+        setIsLoading(true);
+        try {
+          const response = await usersService.updateUser(user_id, { group_id: null });
+          toast.success("Üye gruptan çıkarıldı");
+          setIsLoading(false);
+          fetchGroups();
+        } catch (error) {
+          console.error("Error removing group member:", error);
+          toast.error("Üye gruptan çıkarılamadı");
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
     return (
         <>
             <div className="max-w-4xl p-6">
@@ -678,7 +701,103 @@ function Groups() {
                                                                     ""
                                                                 
                                                             }
-                                                            <div className="grid grid-cols-1 gap-3">
+                                                            <div>
+                                                                <Table>
+                                                                    <TableHeader>
+                                                                        <TableRow>
+                                                                            <TableHead>Üye</TableHead>
+                                                                            <TableHead>E-posta</TableHead>
+                                                                            <TableHead>Roller</TableHead>
+                                                                            <TableHead>Kategori</TableHead>
+                                                                            <TableHead>Durum</TableHead>
+                                                                            <TableHead className="w-[80px]"></TableHead>
+                                                                        </TableRow>
+                                                                    </TableHeader>
+                                                                    <TableBody>
+                                                                        {group.users.map((user, index) => (
+                                                                            <TableRow key={user.id}>
+                                                                                <TableCell className="font-medium">
+                                                                                    <div className="flex items-center gap-3">
+                                                                                        <div className="w-8 h-8 bg-indigo-200 rounded-full flex items-center justify-center text-sm font-medium text-indigo-700">
+                                                                                            {user.first_name?.charAt(0).toUpperCase()}{user.last_name?.charAt(0).toUpperCase()}
+                                                                                        </div>
+                                                                                        <span>{user.first_name} {user.last_name}</span>
+                                                                                    </div>
+                                                                                </TableCell>
+                                                                                <TableCell>{user.email}</TableCell>
+                                                                                <TableCell>
+                                                                                    {user.roles && user.roles.length > 0 ? (
+                                                                                        <div className="flex flex-wrap gap-1">
+                                                                                            {user.roles.map((role) => (
+                                                                                                <span key={role.id} className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-full text-xs font-medium">
+                                                                                                    {role.role}
+                                                                                                </span>
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    ) : (
+                                                                                        <span className="text-gray-400 text-sm">Rol atanmamış</span>
+                                                                                    )}
+                                                                                </TableCell> 
+                                                                                <TableCell>
+                                                                                    {user.roles && user.roles.length > 0 ? (
+                                                                                        <div className="flex flex-wrap gap-1">
+                                                                                            {user.roles.map((role) => (
+                                                                                                role.category && (
+                                                                                                    <span key={`${role.id}-category`} className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">
+                                                                                                        {role.category}
+                                                                                                    </span>
+                                                                                                )
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    ) : (
+                                                                                        <span className="text-gray-400 text-sm">-</span>
+                                                                                    )}
+                                                                                </TableCell>
+                                                                                <TableCell>
+                                                                                    <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                                                                                        Aktif
+                                                                                    </span>
+                                                                                </TableCell>
+                                                                                <TableCell>
+                                                                                    {
+                                                                                        isSuperUser || group.region_exc_director_id === userId ? 
+
+                                                                                        <DropdownMenu>
+                                                                                            <DropdownMenuTrigger asChild>
+                                                                                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                                                                                    <MoreHorizontal className="h-4 w-4" />
+                                                                                                </Button>
+                                                                                            </DropdownMenuTrigger>
+                                                                                            <DropdownMenuContent align="end">
+                                                                                                <DropdownMenuItem
+                                                                                                    onClick={() => updateGroupMemberClick(group, user)}
+                                                                                                    variant="default"
+                                                                                                    className="cursor-pointer"
+                                                                                                >
+                                                                                                    <Edit className="mr-2 h-4 w-4" />
+                                                                                                    <span>Düzenle</span>
+                                                                                                </DropdownMenuItem>
+                                                                                                <DropdownMenuItem 
+                                                                                                    onClick={() => handleRemoveGroupMember(user.id)} 
+                                                                                                    variant="destructive"
+                                                                                                    className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                                                                                                >
+                                                                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                                                                    Gruptan Çıkar
+                                                                                                </DropdownMenuItem>
+                                                                                            </DropdownMenuContent>
+                                                                                        </DropdownMenu> 
+                                                                                    : 
+                                                                                    ""
+                                                                                    }
+                                                                                    
+                                                                                </TableCell>         
+                                                                            </TableRow>
+                                                                        ))}
+                                                                    </TableBody>
+                                                                </Table>
+                                                            </div>
+                                                            {/* <div className="grid grid-cols-1 gap-3">
                                                                 {group.users.map((user, index) => (
                                                                     <div key={user.id} className="bg-secondary border border-gray-100 rounded-lg shadow-sm p-3 hover:shadow-md transition-all">
                                                                         <div className="flex justify-between items-start">
@@ -720,7 +839,7 @@ function Groups() {
                                                                         )}
                                                                     </div>
                                                                 ))}
-                                                            </div>
+                                                            </div> */}
                                                         </div>
                                                     </AccordionContent>
                                                 </AccordionItem>
