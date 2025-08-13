@@ -443,7 +443,7 @@ function GroupDetail() {
       toast.error("Ziyaretçi eklenemedi")
     } finally {
       setIsLoading(false)
-
+      addVisitorForm.reset() // Formu sıfırla
     }
   }
   
@@ -859,6 +859,7 @@ function GroupDetail() {
                                     <TableHead>Ziyaret Tarihi</TableHead>
                                     <TableHead>Durum</TableHead>
                                     <TableHead>İletişim</TableHead>
+                                    <TableHead>Davet Eden</TableHead>
                                     <TableHead>Notlar</TableHead>
                                     <TableHead className="w-[80px]"></TableHead>
                                   </TableRow>
@@ -881,6 +882,7 @@ function GroupDetail() {
                                           <div>{visitor.email}</div>
                                         </div>
                                       </TableCell>
+                                      <TableCell>{visitor.invited_by_full_name}</TableCell>
                                       <TableCell>
                                         <div className="max-w-xs">
                                           {visitor.note && <p className="text-sm mb-1">{visitor.note}</p>}
@@ -905,6 +907,7 @@ function GroupDetail() {
                                           )}
                                         </div>
                                       </TableCell>
+                                      
                                       <TableCell>
                                         <DropdownMenu>
                                           <DropdownMenuTrigger asChild>

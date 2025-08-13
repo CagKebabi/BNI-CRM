@@ -1,16 +1,11 @@
 import * as React from "react"
 import { useEffect } from "react"
 import {
-  AudioWaveform,
-  BookOpen,
-  Bot,
-  Command,
   Frame,
-  GalleryVerticalEnd,
   Map,
   PieChart,
-  Settings2,
   SquareTerminal,
+  UsersRound
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -57,7 +52,7 @@ const data = {
     {
       title: "Kullanıcılar",
       url: "#",
-      icon: SquareTerminal,
+      icon: UsersRound,
       isActive: true,
       items: [
         // {
