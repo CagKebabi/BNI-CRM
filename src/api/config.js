@@ -48,6 +48,7 @@ export const ENDPOINTS = {
   DELETE_VISIT: (id) => `/visits/visitors/${id}/`,
   // Group Meetings endpoints
   GET_GROUP_MEETINGS: (groupId) => `/organization/meetings/?group=${groupId}`,
+  SET_GROUP_MEETING: (groupId) => `/organization/groups/${groupId}/generate-meetings/`,
   // Open Categories endpoints
   GET_OPEN_CATEGORIES: (groupId) =>
     `/organization/groups/${groupId}/open-categories/`,

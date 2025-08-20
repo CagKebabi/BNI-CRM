@@ -5,6 +5,7 @@ import { regionsService } from '../services/regions.service';
 import { rolesService } from '../services/roles.service';
 import { groupMembersService } from '../services/groupMembers.service';
 import { usersService } from '../services/users.service';
+import { groupMeetingsService } from '../services/groupMeetings.service';
 import * as z from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '../components/ui/button';
@@ -45,6 +46,17 @@ import {
     DialogFooter,
     DialogDescription,
 } from '../components/ui/dialog';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+
 import {
     Form,
     FormControl,
@@ -97,6 +109,7 @@ function Groups() {
     const [isLoading, setIsLoading] = useState(true);
     const [addGroupDialogOpen, setAddGroupDialogOpen] = useState(false);
     const [updateGroupDialogOpen, setUpdateGroupDialogOpen] = useState(false);
+    const [deleteGroupDialogOpen, setDeleteGroupDialogOpen] = useState(false);
     const [rolesDialogOpen, setRolesDialogOpen] = useState(false);
     const [addRolesDialogOpen, setAddRolesDialogOpen] = useState(false);
     const [addGroupMemberDialogOpen, setAddGroupMemberDialogOpen] = useState(false);
@@ -310,8 +323,12 @@ function Groups() {
         
         setUpdateGroupDialogOpen(true);
     };
+
+    const handleDeleteGroupClick = (group) => {
+        setSelectedGroup(group);
+        setDeleteGroupDialogOpen(true);
+    };
     
-    // Grup detayı görüntüleme fonksiyonu
     const handleViewGroupDetail = (group) => {
         // Seçilen grup bilgisini context'e kaydet
         setSelectedGroupContext(group);
@@ -326,7 +343,8 @@ function Groups() {
         try {
             if (!data.name.trim()) return;
             
-            await groupsService.createGroup(data);
+            const response = await groupsService.createGroup(data);
+            await groupMeetingsService.setGroupMeeting(response.id);
             toast.success('Grup başarıyla eklendi');
             setIsLoading(false);
             setAddGroupDialogOpen(false);
@@ -346,6 +364,7 @@ function Groups() {
             if (!data.name.trim()) return;
             
             await groupsService.updateGroup(selectedGroup.id, data);
+            await groupMeetingsService.setGroupMeeting(selectedGroup.id);
             toast.success('Grup başarıyla güncellendi');
             setIsLoading(false);
             setUpdateGroupDialogOpen(false);
@@ -358,10 +377,10 @@ function Groups() {
         }
     };
     
-    const handleDeleteGroup = async (id) => {
+    const handleDeleteGroup = async () => {
         setIsLoading(true);
         try {
-            await groupsService.deleteGroup(id);
+            await groupsService.deleteGroup(selectedGroup.id);
             toast.success('Grup başarıyla silindi');
             setIsLoading(false);
             fetchGroups(); // Refresh the list
@@ -628,7 +647,7 @@ function Groups() {
                                                         <Edit className="mr-2 h-4 w-4" />
                                                         Düzenle
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => handleDeleteGroup(group.id)} variant="destructive" className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
+                                                    <DropdownMenuItem onClick={() => handleDeleteGroupClick(group)} variant="destructive" className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
                                                         <Trash2 className="mr-2 h-4 w-4" />
                                                         Sil
                                                     </DropdownMenuItem>
@@ -1796,6 +1815,20 @@ function Groups() {
                     </div>
                 </DialogContent>
             </Dialog>
+            <AlertDialog open={deleteGroupDialogOpen} onOpenChange={setDeleteGroupDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Grubu silmek istediğinize emin misiniz?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Bu işlem geri alınamaz.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>İptal</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDeleteGroup()}>Onayla</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog> 
         </>
     )
 }
