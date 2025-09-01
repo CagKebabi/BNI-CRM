@@ -28,40 +28,177 @@ const PagePrint = () => {
           className="a4-page"
         >
           {/* Buraya içeriğinizi ekleyebilirsiniz */}
-          <div className="a4-content">
+          <div className="a4-content pb-[50px] autoFix">
             {/* İçerik buraya gelecek */}
-            <div className='text-[12px] font-bold h-[63px] pl-[28px] pr-[28px] flex items-center justify-between bg-[#F3F3F3] autoFix'>
-                <img className='w-[43px]' src={bniLogo} alt="" />
-                <div className='w-[2px] h-[20px] bg-[#DFDFDF]'></div>
-                <h2 className=' font-bold text-[#C80F2E]'>
-                    PRUVA <br />
-                    GRUP TOPLANTISI
-                </h2>
-                <div className='w-[2px] h-[20px] bg-[#DFDFDF]'></div>
-                <div className='font-bold flex gap-3 items-center'>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 19 19" fill="none">
-                        <path d="M9.49976 19C4.26118 19 -0.000244141 14.7386 -0.000244141 9.5C-0.000244141 4.26143 4.26118 0 9.49976 0C14.7383 0 18.9998 4.26143 18.9998 9.5C18.9998 14.7386 14.7383 19 9.49976 19ZM9.49976 1.35714C5.00924 1.35714 1.3569 5.00949 1.3569 9.5C1.3569 13.9905 5.00924 17.6429 9.49976 17.6429C13.9903 17.6429 17.6426 13.9905 17.6426 9.5C17.6426 5.00949 13.9903 1.35714 9.49976 1.35714ZM13.3727 13.373C13.6382 13.1075 13.6382 12.6791 13.3727 12.4136L10.1783 9.21923V4.75C10.1783 4.37508 9.87467 4.07143 9.49976 4.07143C9.12484 4.07143 8.82118 4.37508 8.82118 4.75V9.5C8.82118 9.67982 8.89243 9.85286 9.01967 9.98008L12.4125 13.3729C12.5448 13.5053 12.7187 13.5714 12.8926 13.5714C13.0665 13.5714 13.2404 13.5053 13.3727 13.373Z" fill="black"/>
-                    </svg>
-                    <div>
-                        <h2 className='text-black'>
-                        HER PERŞEMBE
+            <div className='text-[12px] gap-2 font-bold h-[63px] pl-[20px] pr-[20px] flex items-center autoFix'>
+                <img className='w-[90px]' src={bniLogo} alt="" />
+                <div className='flex items-start flex-col flex-grow'>
+                    <h2 className=' font-bold text-xl text-[#C80F2E]'>
+                        PRUVA GRUP TOPLANTISI
                     </h2>
-                    <h2 className='text-[#C80F2E]'>
-                        07:00 | 09:00 ARASI
-                    </h2>
-                    </div>
-                </div>
-                <div className='w-[2px] h-[20px] bg-[#DFDFDF]'></div>
-                <div className='flex gap-1 items-center'>
-                    <span className='text-[#C80F2E]'>
-                        24 Nisan 2025
-                    </span>
-                    <span className='text-black'>
-                        PERŞEMBE
-                    </span>
+                    <p className='text-xs font-light text-[#C80F2E]'>
+                        Türkiye’nin İş Yapış Biçimini Değiştiriyoruz
+                    </p>
+                    <div className='w-full h-[1px] bg-[#000000]'></div>
                 </div>
             </div>
-            <div className='pl-[28px] pr-[28px] autoFix'>
+            <div className='pl-[20px] pr-[20px] autoFix'>
+                <div className='font-bold text-xl'>BNI PRUVA Her Perşembe Sabahı - 07:00 - 09:00 Arası</div>
+                <div className='text-xs font-light text-[#000000] text-end'>www.bni.com.tr</div>
+                <div className='w-full h-[1px] bg-[#000000]'></div>
+            </div>
+            <div className='flex pl-[20px] pr-[20px] autoFix'>
+                <div className='w-2.5/10'>
+                    <div>
+                        <div className='font-bold text-center text-md p-[7px] bg-[#F3F3F3] mt-[15px] w-full autoFix'>RAKAMLARLA PRUVA</div>
+                        <div>
+                            <div className='font-bold text-sm text-center'>01.06.2025 <span className='font-light text-sm'>Tarihi İtibariyle</span></div>
+                        </div>
+                    </div>
+                    <div className='flex flex-col items-center gap-2 mt-[20px] autoFix'>
+                        <div className='font-bold text-md'>Yönlendirme</div>
+                        <div className='font-bold text-6xl text-[#C80F2E]'>911</div>
+                    </div>
+                    <div className='flex flex-col items-center gap-2 mt-[20px] autoFix'>
+                        <div className='font-bold text-md'>Ciro</div>
+                        <div className='font-bold text-2xl text-[#C80F2E]'>₺19.215.107</div>
+                    </div>
+                    <div className='flex flex-col items-center gap-2 mt-[20px] autoFix'>
+                        <div className='font-bold text-md'>1'E 1</div>
+                        <div className='font-bold text-6xl text-[#C80F2E] autoFix'>634</div>
+                    </div>
+                    <div className='flex flex-col items-center gap-2 mt-[20px] autoFix'>
+                        <div className='font-bold text-md'>Ziyaretçi</div>
+                        <div className='font-bold text-6xl text-[#C80F2E] autoFix'>152</div>
+                    </div>
+                    <div className='font-bold text-center text-md p-[7px] bg-[#F3F3F3] mt-[15px] w-full autoFix'>TEMMUZ AYI</div>
+                    <div className='font-bold text-center text-md p-[7px] bg-[#F3F3F3] w-full autoFix'>NETWORK LİDERLERİ</div>
+                    <div className='flex flex-col items-center'>
+                        <div className='flex flex-col items-center'>
+                            <div className='font-bold text-center text-md p-[7px] pb-0 w-full autoFix'>iŞ YÖNLENDİRME</div>
+                            <div className='text-center text-sm w-full autoFix'>Muhammed Emin Tezcan</div>
+                        </div>
+                        <div className='font-bold text-6xl text-[#C80F2E] p-[25px] autoFix'>9</div>
+                    </div>
+                    <div className='flex flex-col items-center'>
+                        <div className='flex flex-col items-center'>
+                            <div className='font-bold text-center text-md w-full autoFix'>ZİYARETİ DAVETİ</div>
+                            <div className='text-center text-sm w-full autoFix'>Yusuf Ziya Nisanoğlu</div>
+                        </div>
+                        <div className='font-bold text-6xl text-[#C80F2E] p-[25px] autoFix'>3</div>
+                    </div>
+                    <div className='flex flex-col items-center'>
+                        <div className='flex flex-col items-center'>
+                            <div className='font-bold text-center text-md w-full autoFix'>CİRO</div>
+                            <div className='text-center text-sm w-full autoFix'>Zafer Yıldırım</div>
+                        </div>
+                        <div className='font-bold text-2xl text-[#C80F2E] p-[20px] autoFix'>₺19.215.107</div>
+                    </div>
+                </div>
+                <div className='w-[1px] h-auto bg-[#000000]'></div>
+                <div className='flex flex-col w-5/10'>
+                    <div className='text-center font-bold text-2xl text-[#C80F2E] p-[20px] autoFix'>21.08.2025</div>
+                    <ul className='flex flex-col items-center gap-2'>
+                        <li className='text-xl'>Serbest Networking</li>
+                        <li className='text-xl'>BNI,Felsefesi ve Temel Değerlerimiz</li>
+                        <li className='text-xl'>Lider Ekip Tanıtımı</li>
+                        <li className='text-xl'>Networking Eğitimi</li>
+                        <li className='text-xl'>Üyelerimizin Haftalık Sunumları </li>
+                        <li className='text-xl'>Ziyaretçi Sunumları (30 Saniye)</li>
+                    </ul>
+                    <div className='flex flex-col items-center gap-3 p-[10px] mt-[10px] bg-[#D11C2F] autoFix'>
+                        <div className='text-xl text-white font-bold'>Genişletilmiş Sunum</div>
+                        <div className='text-xl text-white font-bold'>Dilan Özdemir</div>
+                        <div className='text-xl text-white font-bold'>Catering Hizmetleri</div>
+                    </div>
+                    <div className='flex flex-col items-center gap-2 mt-[10px] autoFix'>
+                        <div className='text-xl'>Katkı Anonsları</div>
+                        <div className='text-xl'>Grubun Başarıları</div>
+                    </div>
+                    <div className='flex flex-col gap-2 mt-[10px] autoFix'>
+                        <div className='text-xl text-[#D11C2F] font-bold underline text-center'>Yaklaşan Etkinlikler</div>
+                        <div className='text-sm font-bold flex justify-between'>
+                            <div className='w-2/3'>YÖNETİM TAKIMLARI TOPLANTISI</div>
+                            <div>09.08.2025</div>
+                        </div>
+                        <div className='text-sm font-bold flex justify-between'>
+                            <div className='w-2/3'>BNI ONLINE SERBEST NETWORKING ETKİNLİĞİ</div>
+                            <div>09.08.2025</div>
+                        </div>
+                    </div>
+                    <div className='text-xl text-center mt-[15px] autoFix'>Kapanış</div>
+                    <div className='flex flex-col flex-grow justify-between gap-2 mt-[10px] autoFix'>
+                        <div className='text-xl text-[#D11C2F] font-bold underline text-center mt-[25px] autoFix'>Haftanın Alıntısı</div>
+                        <div className='text-center pl-[25px] pr-[25px] autoFix'>Fırsatlar durup dururken karşınıza çıkmaz, onları siz
+                        yaratırsınız. </div>
+                        <div className='text-end pr-[15px] autoFix'>Chris Grosser</div>
+                    </div>
+                </div>
+                <div className='w-[1px] h-auto bg-[#000000]'></div>
+                <div className='w-2.5/10'>
+                    <div className='font-bold text-center text-md p-[7px] bg-[#F3F3F3] mt-[15px] w-full autoFix'>LİDER EKİP ÜYELERİMİZ</div>
+                    <ul className='flex flex-col gap-2 mt-[20px] pl-[3px] autoFix'>
+                        <li className='flex flex-col gap-1'>
+                            <div className='text-xs text-[#D11C2F] font-bold'>Grup Başkanı</div>
+                            <div className='text-sm'>Muhammet Emin Tezcan</div>
+                        </li>
+                        <li className='flex flex-col gap-1'>
+                            <div className='text-xs text-[#D11C2F] font-bold'>Üyelik Komitesi Başkanı</div>
+                            <div className='text-sm'>Cemile Yaşar</div>
+                        </li>
+                        <li className='flex flex-col gap-1'>
+                            <div className='text-xs text-[#D11C2F] font-bold'>Sayman</div>
+                            <div className='text-sm'>Ozan Albal</div>
+                        </li>
+                        <li className='flex flex-col gap-1'>
+                            <div className='text-xs text-[#D11C2F] font-bold'>Eğitim Koordinatörü</div>
+                            <div className='text-sm'>Yusuf Ziya Nisanoğlu</div>
+                        </li>
+                        <li className='flex flex-col gap-1'>
+                            <div className='text-xs text-[#D11C2F] font-bold'>Etkinlik Koordinatörü</div>
+                            <div className='text-sm'>İsmail Yapıcı</div>
+                        </li>
+                        <li className='flex flex-col gap-1'>
+                            <div className='text-xs text-[#D11C2F] font-bold'>Birebir Koordinatörü</div>
+                            <div className='text-sm'>Hasan Hüseyin Köroğlu</div>
+                        </li>
+                        <li className='flex flex-col gap-1'>
+                            <div className='text-xs text-[#D11C2F] font-bold'>Mentör Koordinatörü</div>
+                            <div className='text-sm'>Selay Göytaş</div>
+                        </li>
+                        <li className='flex flex-col gap-1'>
+                            <div className='text-xs text-[#D11C2F] font-bold'>Güç Takımları Koordinatörü</div>
+                            <div className='text-sm'>Kadir Arslan</div>
+                        </li>
+                        <li className='flex flex-col gap-1'>
+                            <div className='text-xs text-[#D11C2F] font-bold'>Oryantasyon Sorumlusu</div>
+                            <div className='text-sm'>Yusuf Ziya Nisanoğlu</div>
+                        </li>
+                        <li className='flex flex-col gap-1'>
+                            <div className='text-xs text-[#D11C2F] font-bold'>Sosyal Medya Sorumlusu</div>
+                            <div className='text-sm'>Cansu Dumlu</div>
+                        </li>
+                        <li className='flex flex-col gap-1'>
+                            <div className='text-xs text-[#D11C2F] font-bold'>Teknik Sorumlu</div>
+                            <div className='text-sm'>Muhammet Yağız</div>
+                        </li>
+                        <li className='flex flex-col gap-1'>
+                            <div className='text-xs text-[#D11C2F] font-bold'>BNI Elçisi</div>
+                            <div className='text-sm'>Muhammet Emin Tezcan</div>
+                        </li>
+                        <li className='flex flex-col gap-1'>
+                            <div className='text-xs text-[#D11C2F] font-bold'>Danışman Direktör</div>
+                            <div className='text-sm'>Cenk Aydoğar</div>
+                        </li>
+                    </ul>
+                    <div className='text-sm font-bold text-center bg-[#D11C2F] text-white mt-[15px] py-[10px] autoFix'>Gold Members</div>
+                    <ul className='flex flex-col gap-1 pl-[3px] text-xs font-bold mt-[10px] autoFix'>
+                        <li>Cemile Yaşar</li>
+                        <li>Yusuf Ziya Nisanoğlu</li>
+                    </ul>
+                </div>
+            </div>
+            {/* <div className='pl-[28px] pr-[28px] autoFix'>
                 <div className='mt-[10px] flex gap-[30px] autoFix'>
                     <div className='text-[15px] font-bold text-[#C80F2E]'>
                         Lider <br />
@@ -241,7 +378,7 @@ const PagePrint = () => {
                         </li>
                     </ul>
                 </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
