@@ -62,7 +62,7 @@ export const ENDPOINTS = {
   DELETE_PRESENTATION: (id) => `/organization/presentations/${id}/`,
   // Events endpoints
   GET_EVENTS: (groupId) => `/organization/events/?group=${groupId}`,
-  CREATE_EVENT: (groupId) => `/organization/groups/${groupId}/add-event/`,
+  CREATE_EVENT: "/organization/events/",
   UPDATE_EVENT: (id) => `/organization/events/${id}/`,
   DELETE_EVENT: (id) => `/organization/events/${id}/`,
 };

@@ -7,6 +7,7 @@ import { presentationsService } from "../services/presentations.service";
 import { groupMembersService } from "../services/groupMembers.service";
 import { rolesService } from "../services/roles.service";
 import { usersService } from "../services/users.service";
+import { eventsService } from "../services/events.service";
 import { useGroup } from "../contexts/GroupContext";
 import { useUser } from "@/contexts/UserContext";
 import * as z from "zod";
@@ -175,6 +176,19 @@ const addPresentationFormSchema = z.object({
   }),
 });
 
+const addEventFormSchema = z.object({
+  group: z.string().uuid({
+    message: "Geçerli bir grup seçiniz.",
+  }),
+  title: z.string().min(2, {
+    message: "Etkinlik adı en az 2 karakter olmalıdır.",
+  }),
+  description: z.string().min(2, {
+    message: "Etkinlik açıklaması en az 2 karakter olmalıdır.",
+  }),
+  date: z.string(),
+});
+
 function GroupDetail() {
   const navigate = useNavigate();
   const { selectedGroupContext } = useGroup();
@@ -206,6 +220,7 @@ function GroupDetail() {
   const [selectedPresentation, setSelectedPresentation] = useState(null);
   const [addOpenCategoriesDialogOpen, setAddOpenCategoriesDialogOpen] =
     useState(false);
+  const [addEventDialogOpen, setAddEventDialogOpen] = useState(false);
   const [groupMeetings, setGroupMeetings] = useState([]);
   const [loadingMeetings, setLoadingMeetings] = useState(false);
 
@@ -268,7 +283,6 @@ function GroupDetail() {
     },
   });
 
-  // Update Group Members Form tanımlaması
   const updateGroupMemberForm = useForm({
     resolver: zodResolver(updateGroupMemberFormSchema),
     defaultValues: {
@@ -296,6 +310,16 @@ function GroupDetail() {
     defaultValues: {
       meeting: "",
       user: "",
+    },
+  });
+
+  const addEventForm = useForm({
+    resolver: zodResolver(addEventFormSchema),
+    defaultValues: {
+      group: selectedGroupContext?.id || "",
+      title: "",
+      description: "",
+      date: "",
     },
   });
 
@@ -803,6 +827,47 @@ function GroupDetail() {
     } catch (error) {
       console.error("Sunum silinirken hata oluştu:", error);
       toast.error("Sunum silinemedi");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Etkinlik İşlemleri
+  const handleAddEvent = async (data) => {
+    const eventData = {
+      ...data,
+      group: selectedGroupContext?.id,
+    };
+    setIsLoading(true);
+    console.log("eventData", eventData);
+    try {
+      await eventsService.createEvent(eventData);
+      setAddEventDialogOpen(false);
+      toast.success("Etkinlik başarıyla eklendi");
+      fetchEvents();
+    } catch (error) {
+      console.error("Etkinlik eklenirken hata oluştu:", error);
+      toast.error("Etkinlik eklenemedi");
+    } finally {
+      setIsLoading(false);
+      addEventForm.reset();
+    }
+  };
+  const handleUpdateEventClick = (event) => {
+    // TODO: Event güncelleme fonksiyonu implementasyonu
+    console.log("Event güncelleme:", event);
+    toast.info("Event güncelleme özelliği yakında eklenecek");
+  };
+
+  const handleDeleteEvent = async (event) => {
+    setIsLoading(true);
+    try {
+      await eventsService.deleteEvent(event.id);
+      toast.success("Etkinlik başarıyla silindi");
+      fetchEvents();
+    } catch (error) {
+      console.error("Etkinlik silinirken hata oluştu:", error);
+      toast.error("Etkinlik silinemedi");
     } finally {
       setIsLoading(false);
     }
@@ -1475,9 +1540,117 @@ function GroupDetail() {
             </TabsContent>
             <TabsContent value="events" className="mt-4">
               <Card>
-                <CardHeader>
-                  <CardTitle>Etkinlikler</CardTitle>
+              <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-2">
+                      <CardTitle>Etkinlikler</CardTitle>
+                      <CardDescription>
+                        {selectedGroupContext
+                          ? `${selectedGroupContext.name} grubu etkinlikler listesi`
+                          : "Etkinlikler"}
+                      </CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="default"
+                        size="icon"
+                        onClick={() => setAddEventDialogOpen(true)}
+                      >
+                        <Plus className="h-5 w-5" />
+                      </Button>
+                    </div>
+                  </div>
                 </CardHeader>
+                <CardContent>
+                  {isLoading ? (
+                    <div className="flex justify-center items-center p-4">
+                      <div className="flex items-center gap-2">
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                        <p>Yükleniyor...</p>
+                      </div>
+                    </div>
+                  ) : events.length > 0 ? (
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Etkinlik Adı</TableHead>
+                            <TableHead>Tarih</TableHead>
+                            <TableHead>Açıklama</TableHead>
+                            <TableHead>Oluşturan</TableHead>
+                            <TableHead>Oluşturulma Tarihi</TableHead>
+                            <TableHead className="w-[80px]"></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {events.map((event) => (
+                            <TableRow key={event.id}>
+                              <TableCell className="font-medium">
+                                {event.title}
+                              </TableCell>
+                              <TableCell>
+                                {new Date(event.date).toLocaleDateString("tr-TR", {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </TableCell>
+                              <TableCell>
+                                {event.description || '-'}
+                              </TableCell>
+                              <TableCell>
+                                {event.created_by_name || 'Bilinmiyor'}
+                              </TableCell>
+                              <TableCell>
+                                {new Date(event.created_at).toLocaleDateString("tr-TR")}
+                              </TableCell>
+                              <TableCell>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      className="h-8 w-8 p-0"
+                                    >
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        handleUpdateEventClick(event)
+                                      }
+                                      variant="default"
+                                      className="cursor-pointer"
+                                    >
+                                      <Edit className="mr-2 h-4 w-4" />
+                                      <span>Düzenle</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        handleDeleteEvent(event)
+                                      }
+                                      variant="destructive"
+                                      className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                                    >
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      Sil
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <div className="text-center p-4">
+                      <p>Henüz etkinlik bulunmuyor.</p>
+                    </div>
+                  )}
+                </CardContent>
               </Card>
             </TabsContent>
           </Tabs>
@@ -2677,6 +2850,117 @@ function GroupDetail() {
                     <FormLabel>Açık Kategori Adı</FormLabel>
                     <FormControl>
                       <Input placeholder="Açık kategori adı" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button
+                  //onClick={handleSaveEdit}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Kaydediliyor..." : "Kaydet"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={addEventDialogOpen} onOpenChange={setAddEventDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Etkinlik Ekle</DialogTitle>
+            <DialogDescription>Etkinlik bilgilerini girin</DialogDescription>
+          </DialogHeader>
+          <Form {...addEventForm}>
+            <form onSubmit={addEventForm.handleSubmit(handleAddEvent)} className="space-y-6">
+            <FormField
+                control={addEventForm.control}
+                name="group"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Grup</FormLabel>
+                    <FormControl>
+                      <Input
+                        value={selectedGroupContext?.name || ""}
+                        disabled
+                        className="bg-gray-50"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={addEventForm.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Etkinlik Adı</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Etkinlik adı" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={addEventForm.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Etkinlik Tarihi</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(new Date(field.value), "PPP", {
+                                locale: tr,
+                              })
+                            ) : (
+                              <span>Etkinlik tarihi seçin</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={
+                            field.value ? new Date(field.value) : undefined
+                          }
+                          onSelect={(date) => {
+                            if (date) {
+                              field.onChange(format(date, "yyyy-MM-dd"));
+                            }
+                          }}
+                          disabled={(date) => date < new Date("1900-01-01")}
+                          initialFocus
+                          locale={tr}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={addEventForm.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Etkinlik Açıklaması</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Etkinlik açıklaması" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

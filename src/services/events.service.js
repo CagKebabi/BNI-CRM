@@ -14,7 +14,7 @@ class EventsService {
     }
     async createEvent(data) {
         try {
-            const response = await apiService.post(ENDPOINTS.CREATE_EVENT(data.groupId), data);
+            const response = await apiService.post(ENDPOINTS.CREATE_EVENT, data);
             console.log("Event created:", response);
             return response;
         }
