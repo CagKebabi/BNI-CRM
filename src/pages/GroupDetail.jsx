@@ -23,6 +23,8 @@ import { Calendar } from "../components/ui/calendar";
 import { se, tr } from "date-fns/locale";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
+import { Link } from "react-router-dom";
+import { Printer } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -853,6 +855,7 @@ function GroupDetail() {
       addEventForm.reset();
     }
   };
+
   const handleUpdateEventClick = (event) => {
     // TODO: Event güncelleme fonksiyonu implementasyonu
     console.log("Event güncelleme:", event);
@@ -901,14 +904,22 @@ function GroupDetail() {
               </div>
             </div>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => navigate("/group-list")}
-            className="flex items-center gap-2"
-          >
-            <Undo2 className="h-4 w-4" />
-            Gruplara Dön
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => navigate("/group-list")}
+              className="flex items-center gap-2"
+            >
+              <Undo2 className="h-4 w-4" />
+              Gruplara Dön
+            </Button>
+            <Link to="/page-print">
+              <Button variant="outline" className="flex items-center gap-2">
+                <Printer className="h-4 w-4" />
+                Yazdır
+              </Button>
+            </Link>
+          </div>
         </div>
         <div className="flex w-full flex-col gap-6">
           <Tabs defaultValue="info" className="w-full">

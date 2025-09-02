@@ -1,14 +1,35 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import bniLogo from '../assets/bni-logo_brandlogos.net_vdxgj.png';
+import { groupMembersService } from '../services/groupMembers.service';
 import './PagePrint.css'; // CSS dosyasını import edeceğiz
+import { useGroup } from '../contexts/GroupContext';
 
 const PagePrint = () => {  
+  const { selectedGroupContext } = useGroup();
   const printRef = useRef(null);
+  const [goldMembers, setGoldMembers] = useState([]);
+  const [leaderMembers, setLeaderMembers] = useState([]);
+
+  useEffect(() => {
+    fetchGoldMembers();
+    fetchLeaderMembers();
+    console.log("goldMembers", goldMembers);
+    console.log("leaderMembers", leaderMembers);
+  }, []);
+
+  const fetchGoldMembers = async () => {
+    const goldMembers = await groupMembersService.getGroupGoldMembers(selectedGroupContext?.id);
+    setGoldMembers(goldMembers);
+  }
+  const fetchLeaderMembers = async () => {
+    const leaderMembers = await groupMembersService.getGroupLeaderTeam(selectedGroupContext?.id);
+    setLeaderMembers(leaderMembers);
+  }
 
   const handlePrint = () => {
     window.print();
   }
-
+  console.log("selectedGroupContext", selectedGroupContext);
   return (
     <>
       {/* Yazdırma butonu - sadece ekranda görünür */}
@@ -34,7 +55,7 @@ const PagePrint = () => {
                 <img className='w-[90px]' src={bniLogo} alt="" />
                 <div className='flex items-start flex-col flex-grow'>
                     <h2 className=' font-bold text-xl text-[#C80F2E]'>
-                        PRUVA GRUP TOPLANTISI
+                        {`${selectedGroupContext?.name} GRUP TOPLANTISI`}
                     </h2>
                     <p className='text-xs font-light text-[#C80F2E]'>
                         Türkiye’nin İş Yapış Biçimini Değiştiriyoruz
@@ -43,7 +64,7 @@ const PagePrint = () => {
                 </div>
             </div>
             <div className='pl-[20px] pr-[20px] autoFix'>
-                <div className='font-bold text-xl'>BNI PRUVA Her Perşembe Sabahı - 07:00 - 09:00 Arası</div>
+                <div className='font-bold text-xl'>{`BNI ${selectedGroupContext?.name} Her ${selectedGroupContext?.meeting_day} Sabahı - ${selectedGroupContext?.start_time} - ${selectedGroupContext?.end_time} Arası`}</div>
                 <div className='text-xs font-light text-[#000000] text-end'>www.bni.com.tr</div>
                 <div className='w-full h-[1px] bg-[#000000]'></div>
             </div>
@@ -52,7 +73,7 @@ const PagePrint = () => {
                     <div>
                         <div className='font-bold text-center text-md p-[7px] bg-[#F3F3F3] mt-[15px] w-full autoFix'>RAKAMLARLA PRUVA</div>
                         <div>
-                            <div className='font-bold text-sm text-center'>01.06.2025 <span className='font-light text-sm'>Tarihi İtibariyle</span></div>
+                            <div className='font-bold text-sm text-center'>{new Date().toLocaleDateString('tr-TR')} <span className='font-light text-sm'>Tarihi İtibariyle</span></div>
                         </div>
                     </div>
                     <div className='flex flex-col items-center gap-2 mt-[20px] autoFix'>
@@ -82,7 +103,7 @@ const PagePrint = () => {
                     </div>
                     <div className='flex flex-col items-center'>
                         <div className='flex flex-col items-center'>
-                            <div className='font-bold text-center text-md w-full autoFix'>ZİYARETİ DAVETİ</div>
+                            <div className='font-bold text-center text-md w-full autoFix'>ZİYARETÇİ DAVETİ</div>
                             <div className='text-center text-sm w-full autoFix'>Yusuf Ziya Nisanoğlu</div>
                         </div>
                         <div className='font-bold text-6xl text-[#C80F2E] p-[25px] autoFix'>3</div>
@@ -138,7 +159,15 @@ const PagePrint = () => {
                 <div className='w-2.5/10'>
                     <div className='font-bold text-center text-md p-[7px] bg-[#F3F3F3] mt-[15px] w-full autoFix'>LİDER EKİP ÜYELERİMİZ</div>
                     <ul className='flex flex-col gap-2 mt-[20px] pl-[3px] autoFix'>
-                        <li className='flex flex-col gap-1'>
+                        {
+                            leaderMembers.map((member) => (
+                                <li className='flex flex-col gap-1'>
+                                    <div className='text-xs text-[#D11C2F] font-bold'>{member.roles.map((role) => role).join(", ")}</div>
+                                    <div className='text-sm'>{member.first_name} {member.last_name}</div>
+                                </li>
+                            ))
+                        }
+                        {/* <li className='flex flex-col gap-1'>
                             <div className='text-xs text-[#D11C2F] font-bold'>Grup Başkanı</div>
                             <div className='text-sm'>Muhammet Emin Tezcan</div>
                         </li>
@@ -189,12 +218,17 @@ const PagePrint = () => {
                         <li className='flex flex-col gap-1'>
                             <div className='text-xs text-[#D11C2F] font-bold'>Danışman Direktör</div>
                             <div className='text-sm'>Cenk Aydoğar</div>
-                        </li>
+                        </li> */}
                     </ul>
                     <div className='text-sm font-bold text-center bg-[#D11C2F] text-white mt-[15px] py-[10px] autoFix'>Gold Members</div>
                     <ul className='flex flex-col gap-1 pl-[3px] text-xs font-bold mt-[10px] autoFix'>
-                        <li>Cemile Yaşar</li>
-                        <li>Yusuf Ziya Nisanoğlu</li>
+                        {
+                            goldMembers.map((member) => (
+                                <li>{member.first_name} {member.last_name}</li>
+                            ))
+                        }
+                        {/* <li>Cemile Yaşar</li>
+                        <li>Yusuf Ziya Nisanoğlu</li> */}
                     </ul>
                 </div>
             </div>
