@@ -60,6 +60,11 @@ export const ENDPOINTS = {
   CREATE_PRESENTATION: "/organization/presentations/",
   UPDATE_PRESENTATION: (id) => `/organization/presentations/${id}/`,
   DELETE_PRESENTATION: (id) => `/organization/presentations/${id}/`,
+  // Events endpoints
+  GET_EVENTS: (groupId) => `/organization/events/?group=${groupId}`,
+  CREATE_EVENT: (groupId) => `/organization/groups/${groupId}/add-event/`,
+  UPDATE_EVENT: (id) => `/organization/events/${id}/`,
+  DELETE_EVENT: (id) => `/organization/events/${id}/`,
 };
 
 // API istekleri için varsayılan ayarlar

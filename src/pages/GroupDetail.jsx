@@ -187,6 +187,7 @@ function GroupDetail() {
   const [filteredGroupMembers, setFilteredGroupMembers] = useState([]);
   const [memberFilter, setMemberFilter] = useState("all");
   const [openCategories, setOpenCategories] = useState([]);
+  const [events, setEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedVisitor, setSelectedVisitor] = useState(null);
   const [addVisitorDialogOpen, setAddVisitorDialogOpen] = useState(false);
@@ -312,6 +313,7 @@ function GroupDetail() {
     fetchRoles();
     fetchUsers();
     fetchGroupMembers();
+    fetchEvents();
   }, [selectedGroupContext, navigate]);
 
   const fethVisitors = async () => {
@@ -419,6 +421,19 @@ function GroupDetail() {
       console.log("GRUP ÜYELERİ ALINDI:", response.members);
     } catch (error) {
       console.error("Grup üyeleri alınırken hata oluştu:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchEvents = async () => {
+    if (!selectedGroupContext?.id) return;
+    try {
+      const response = await eventsService.getEvents(selectedGroupContext.id);
+      setEvents(response);
+    }
+    catch (error) {
+      console.error("Etkinlikler alınırken hata oluştu:", error);
     } finally {
       setIsLoading(false);
     }
@@ -832,12 +847,13 @@ function GroupDetail() {
         </div>
         <div className="flex w-full flex-col gap-6">
           <Tabs defaultValue="info" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="info">Grup Bilgileri</TabsTrigger>
               <TabsTrigger value="visitors">Ziyaretçiler</TabsTrigger>
               <TabsTrigger value="members">Üyeler</TabsTrigger>
               <TabsTrigger value="presentations">Sunumlar</TabsTrigger>
               <TabsTrigger value="openCategories">Açık Kategoriler</TabsTrigger>
+              <TabsTrigger value="events">Etkinlikler</TabsTrigger>
             </TabsList>
 
             <TabsContent value="info" className="mt-4">
@@ -1455,6 +1471,13 @@ function GroupDetail() {
                     </div>
                   )}
                 </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="events" className="mt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Etkinlikler</CardTitle>
+                </CardHeader>
               </Card>
             </TabsContent>
           </Tabs>
