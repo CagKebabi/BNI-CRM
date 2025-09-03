@@ -63,6 +63,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+  getPaginationRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+} from "@tanstack/react-table";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -202,6 +210,9 @@ function GroupDetail() {
   const [groupMembers, setGroupMembers] = useState([]);
   const [filteredGroupMembers, setFilteredGroupMembers] = useState([]);
   const [memberFilter, setMemberFilter] = useState("all");
+  const [memberSorting, setMemberSorting] = useState([]);
+  const [memberColumnFilters, setMemberColumnFilters] = useState([]);
+  const [memberGlobalFilter, setMemberGlobalFilter] = useState("");
   const [openCategories, setOpenCategories] = useState([]);
   const [events, setEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -210,19 +221,16 @@ function GroupDetail() {
   const [updateVisitorDialogOpen, setUpdateVisitorDialogOpen] = useState(false);
   const [deleteVisitorDialogOpen, setDeleteVisitorDialogOpen] = useState(false);
   const [addNoteDialogOpen, setAddNoteDialogOpen] = useState(false);
-  const [addGroupMemberDialogOpen, setAddGroupMemberDialogOpen] =
-    useState(false);
-  const [updateGroupMemberDialogOpen, setUpdateGroupMemberDialogOpen] =
-    useState(false);
+  const [addGroupMemberDialogOpen, setAddGroupMemberDialogOpen] = useState(false);
+  const [updateGroupMemberDialogOpen, setUpdateGroupMemberDialogOpen] = useState(false);
   const [selectedGroupMember, setSelectedGroupMember] = useState(null);
-  const [addPresentationDialogOpen, setAddPresentationDialogOpen] =
-    useState(false);
-  const [updatePresentationDialogOpen, setUpdatePresentationDialogOpen] =
-    useState(false);
+  const [addPresentationDialogOpen, setAddPresentationDialogOpen] = useState(false);
+  const [updatePresentationDialogOpen, setUpdatePresentationDialogOpen] = useState(false);
   const [selectedPresentation, setSelectedPresentation] = useState(null);
-  const [addOpenCategoriesDialogOpen, setAddOpenCategoriesDialogOpen] =
-    useState(false);
+  const [addOpenCategoriesDialogOpen, setAddOpenCategoriesDialogOpen] = useState(false);
   const [addEventDialogOpen, setAddEventDialogOpen] = useState(false);
+  const [updateEventDialogOpen, setUpdateEventDialogOpen] = useState(false);
+  const [ selectedEvent, setSelectedEvent ] = useState(null);
   const [groupMeetings, setGroupMeetings] = useState([]);
   const [loadingMeetings, setLoadingMeetings] = useState(false);
 
@@ -316,6 +324,16 @@ function GroupDetail() {
   });
 
   const addEventForm = useForm({
+    resolver: zodResolver(addEventFormSchema),
+    defaultValues: {
+      group: selectedGroupContext?.id || "",
+      title: "",
+      description: "",
+      date: "",
+    },
+  });
+
+  const updateEventForm = useForm({
     resolver: zodResolver(addEventFormSchema),
     defaultValues: {
       group: selectedGroupContext?.id || "",
@@ -464,6 +482,126 @@ function GroupDetail() {
       setIsLoading(false);
     }
   };
+
+  // Members table konfigürasyonu
+  const memberColumns = [
+    {
+      accessorKey: "first_name",
+      header: "Üye",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-indigo-200 rounded-full flex items-center justify-center text-sm font-medium text-indigo-700">
+            {row.original.first_name?.charAt(0).toUpperCase()}
+            {row.original.last_name?.charAt(0).toUpperCase()}
+          </div>
+          <span>
+            {row.original.first_name} {row.original.last_name}
+          </span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "email",
+      header: "E-posta",
+      cell: ({ row }) => <div>{row.getValue("email")}</div>,
+    },
+    {
+      accessorKey: "roles",
+      header: "Roller",
+      cell: ({ row }) => (
+        <div>
+          {row.original.roles && row.original.roles.length > 0 ? (
+            <div className="flex flex-wrap gap-1">
+              {row.original.roles.map((role) => (
+                <span
+                  key={role.id}
+                  className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-full text-xs font-medium"
+                >
+                  {role.role}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <span className="text-gray-400 text-sm">Rol atanmamış</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "category",
+      header: "Kategori",
+      cell: ({ row }) => (
+        <div>
+          {row.original.roles && row.original.roles.length > 0 ? (
+            <div className="flex flex-wrap gap-1">
+              {row.original.roles.map(
+                (role) =>
+                  role.category && (
+                    <span
+                      key={`${role.id}-category`}
+                      className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs"
+                    >
+                      {role.category}
+                    </span>
+                  )
+              )}
+            </div>
+          ) : (
+            <span className="text-gray-400 text-sm">-</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => updateGroupMemberClick(row.original)}
+                variant="default"
+                className="cursor-pointer"
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                <span>Düzenle</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleRemoveGroupMember(row.original.id)}
+                variant="destructive"
+                className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Gruptan Çıkar
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
+
+  const memberTable = useReactTable({
+    data: filteredGroupMembers,
+    columns: memberColumns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onSortingChange: setMemberSorting,
+    onColumnFiltersChange: setMemberColumnFilters,
+    onGlobalFilterChange: setMemberGlobalFilter,
+    state: {
+      sorting: memberSorting,
+      columnFilters: memberColumnFilters,
+      globalFilter: memberGlobalFilter,
+    },
+  });
 
   // Client-side filtreleme fonksiyonu
   const filterGroupMembers = (filterType) => {
@@ -857,9 +995,39 @@ function GroupDetail() {
   };
 
   const handleUpdateEventClick = (event) => {
-    // TODO: Event güncelleme fonksiyonu implementasyonu
-    console.log("Event güncelleme:", event);
-    toast.info("Event güncelleme özelliği yakında eklenecek");
+    setSelectedEvent(event);
+    updateEventForm.reset({
+      title: event.title,
+      description: event.description,
+      date: event.date,
+      group: event.group,
+    });
+    setUpdateEventDialogOpen(true);
+  };
+
+  const handleUpdateEvent = async (data) => {
+    const eventData = {
+      ...data,
+      group: selectedGroupContext?.id,
+    };
+    setIsLoading(true);
+    try {
+      const response = await eventsService.updateEvent(
+        selectedEvent.id,
+        eventData
+      );
+      console.log("Etkinlik güncellendi:", response);
+      setUpdateEventDialogOpen(false);
+      toast.success("Etkinlik başarıyla güncellendi");
+      // Sunumlar güncellenecek
+    } catch (error) {
+      console.error("Etkinlik güncellenirken hata oluştu:", error);
+      toast.error("Etkinlik güncellenemedi");
+    } finally {
+      fetchEvents();
+      setIsLoading(false);
+      updateEventForm.reset();
+    }
   };
 
   const handleDeleteEvent = async (event) => {
@@ -917,6 +1085,12 @@ function GroupDetail() {
               <Button variant="outline" className="flex items-center gap-2">
                 <Printer className="h-4 w-4" />
                 Yazdır
+              </Button>
+            </Link>
+            <Link to="/page-print-2">
+              <Button variant="outline" className="flex items-center gap-2">
+                <Printer className="h-4 w-4" />
+                Yazdır2
               </Button>
             </Link>
           </div>
@@ -1234,144 +1408,108 @@ function GroupDetail() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <Label
-                        htmlFor="member-filter"
-                        className="text-sm font-medium"
-                      >
-                        Filtre:
-                      </Label>
-                      <Select
-                        onValueChange={(value) => filterGroupMembers(value)}
-                        value={memberFilter}
-                      >
-                        <SelectTrigger className="w-[140px]">
-                          <SelectValue placeholder="Üye Tipi" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Tüm Üyeler</SelectItem>
-                          <SelectItem value="gold">Altın Üyeler</SelectItem>
-                          <SelectItem value="leader">Lider Ekip</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    <div className="flex items-center gap-4">
+                      <Input
+                        placeholder="Üye ara..."
+                        value={memberGlobalFilter ?? ""}
+                        onChange={(event) => setMemberGlobalFilter(event.target.value)}
+                        className="max-w-sm"
+                      />
+                      <div className="flex items-center gap-2">
+                        <Label
+                          htmlFor="member-filter"
+                          className="text-sm font-medium"
+                        >
+                          Filtre:
+                        </Label>
+                        <Select
+                          onValueChange={(value) => filterGroupMembers(value)}
+                          value={memberFilter}
+                        >
+                          <SelectTrigger className="w-[140px]">
+                            <SelectValue placeholder="Üye Tipi" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Tüm Üyeler</SelectItem>
+                            <SelectItem value="gold">Altın Üyeler</SelectItem>
+                            <SelectItem value="leader">Lider Ekip</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   </div>
-                  {filteredGroupMembers && filteredGroupMembers.length > 0 ? (
+                  <div className="space-y-4">
                     <div className="rounded-md border">
                       <Table>
                         <TableHeader>
-                          <TableRow>
-                            <TableHead>Üye</TableHead>
-                            <TableHead>E-posta</TableHead>
-                            <TableHead>Roller</TableHead>
-                            <TableHead>Kategori</TableHead>
-                            <TableHead>Durum</TableHead>
-                            <TableHead className="w-[80px]"></TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredGroupMembers.map((user) => (
-                            <TableRow key={user.id}>
-                              <TableCell className="font-medium">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 bg-indigo-200 rounded-full flex items-center justify-center text-sm font-medium text-indigo-700">
-                                    {user.first_name?.charAt(0).toUpperCase()}
-                                    {user.last_name?.charAt(0).toUpperCase()}
-                                  </div>
-                                  <span>
-                                    {user.first_name} {user.last_name}
-                                  </span>
-                                </div>
-                              </TableCell>
-                              <TableCell>{user.email}</TableCell>
-                              <TableCell>
-                                {user.roles && user.roles.length > 0 ? (
-                                  <div className="flex flex-wrap gap-1">
-                                    {user.roles.map((role) => (
-                                      <span
-                                        key={role.id}
-                                        className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-full text-xs font-medium"
-                                      >
-                                        {role.role}
-                                      </span>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <span className="text-gray-400 text-sm">
-                                    Rol atanmamış
-                                  </span>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {user.roles && user.roles.length > 0 ? (
-                                  <div className="flex flex-wrap gap-1">
-                                    {user.roles.map(
-                                      (role) =>
-                                        role.category && (
-                                          <span
-                                            key={`${role.id}-category`}
-                                            className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs"
-                                          >
-                                            {role.category}
-                                          </span>
-                                        )
-                                    )}
-                                  </div>
-                                ) : (
-                                  <span className="text-gray-400 text-sm">
-                                    -
-                                  </span>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
-                                  Aktif
-                                </span>
-                              </TableCell>
-                              <TableCell>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      className="h-8 w-8 p-0"
-                                    >
-                                      <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        updateGroupMemberClick(user)
-                                      }
-                                      variant="default"
-                                      className="cursor-pointer"
-                                    >
-                                      <Edit className="mr-2 h-4 w-4" />
-                                      <span>Düzenle</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        handleRemoveGroupMember(user.id)
-                                      }
-                                      variant="destructive"
-                                      className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
-                                    >
-                                      <Trash2 className="mr-2 h-4 w-4" />
-                                      Gruptan Çıkar
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </TableCell>
+                          {memberTable.getHeaderGroups().map((headerGroup) => (
+                            <TableRow key={headerGroup.id}>
+                              {headerGroup.headers.map((header) => {
+                                return (
+                                  <TableHead key={header.id}>
+                                    {header.isPlaceholder
+                                      ? null
+                                      : flexRender(
+                                          header.column.columnDef.header,
+                                          header.getContext()
+                                        )}
+                                  </TableHead>
+                                );
+                              })}
                             </TableRow>
                           ))}
+                        </TableHeader>
+                        <TableBody>
+                          {memberTable.getRowModel().rows?.length ? (
+                            memberTable.getRowModel().rows.map((row) => (
+                              <TableRow
+                                key={row.id}
+                                data-state={row.getIsSelected() && "selected"}
+                              >
+                                {row.getVisibleCells().map((cell) => (
+                                  <TableCell key={cell.id}>
+                                    {flexRender(
+                                      cell.column.columnDef.cell,
+                                      cell.getContext()
+                                    )}
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell
+                                colSpan={memberColumns.length}
+                                className="h-24 text-center"
+                              >
+                                Bu grupta henüz üye bulunmamaktadır.
+                              </TableCell>
+                            </TableRow>
+                          )}
                         </TableBody>
                       </Table>
                     </div>
-                  ) : (
-                    <div className="text-center p-4">
-                      <p>Bu grupta henüz üye bulunmamaktadır.</p>
+                    
+                    <div className="flex items-center justify-end space-x-2 py-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => memberTable.previousPage()}
+                        disabled={!memberTable.getCanPreviousPage()}
+                      >
+                        Önceki
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => memberTable.nextPage()}
+                        disabled={!memberTable.getCanNextPage()}
+                      >
+                        Sonraki
+                      </Button>
                     </div>
-                  )}
+                  </div>
+
                 </CardContent>
               </Card>
             </TabsContent>
@@ -2551,7 +2689,7 @@ function GroupDetail() {
                         <SelectContent>
                           {roles.map((role) => (
                             <SelectItem key={role.id} value={role.id}>
-                              {role.name}
+                              {role.name} - {role.category}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -2966,6 +3104,120 @@ function GroupDetail() {
               />
               <FormField
                 control={addEventForm.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Etkinlik Açıklaması</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Etkinlik açıklaması" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button
+                  //onClick={handleSaveEdit}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Kaydediliyor..." : "Kaydet"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={updateEventDialogOpen}
+        onOpenChange={setUpdateEventDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Etkinlik Düzenle</DialogTitle>
+            <DialogDescription>Etkinlik bilgilerini girin</DialogDescription>
+          </DialogHeader>
+          <Form {...updateEventForm}>
+            <form onSubmit={updateEventForm.handleSubmit(handleUpdateEvent)} className="space-y-6">
+            <FormField
+                control={updateEventForm.control}
+                name="group"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Grup</FormLabel>
+                    <FormControl>
+                      <Input
+                        value={selectedGroupContext?.name || ""}
+                        disabled
+                        className="bg-gray-50"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={updateEventForm.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Etkinlik Adı</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Etkinlik adı" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={updateEventForm.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Etkinlik Tarihi</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(new Date(field.value), "PPP", {
+                                locale: tr,
+                              })
+                            ) : (
+                              <span>Etkinlik tarihi seçin</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={
+                            field.value ? new Date(field.value) : undefined
+                          }
+                          onSelect={(date) => {
+                            if (date) {
+                              field.onChange(format(date, "yyyy-MM-dd"));
+                            }
+                          }}
+                          disabled={(date) => date < new Date("1900-01-01")}
+                          initialFocus
+                          locale={tr}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={updateEventForm.control}
                 name="description"
                 render={({ field }) => (
                   <FormItem>

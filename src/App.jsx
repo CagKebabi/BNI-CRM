@@ -11,6 +11,7 @@ import GroupDetail from "./pages/GroupDetail";
 import Users from "./pages/Users";
 import Home from "./pages/Home";
 import PagePrint from "./pages/PagePrint";
+import PagePrint2 from "./pages/PagePrint2";
 import { UserProvider } from "./contexts/UserContext";
 import { GroupProvider } from "./contexts/GroupContext";
 
@@ -59,6 +60,10 @@ function App() {
             {
               path: "page-print",
               element: <PagePrint />,
+            },
+            {
+              path: "page-print-2",
+              element: <PagePrint2 />,
             }
           ],
         }

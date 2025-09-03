@@ -18,6 +18,13 @@
   margin: 0;
 }
 
+/* Sayfa arası boşluk kontrolü için */
+@media screen {
+  .a4-page {
+    margin-bottom: 2rem; /* Ekranda görüntülerken sayfalar arası boşluk */
+  }
+}
+
 /* Yazdırma Medya Sorgusu */
 @media print {
   /* Yazdırma sırasında arka plan renklerini ve görselleri göster */
@@ -30,7 +37,7 @@
   *:not(.autoFix) {
     margin: 0 !important;
     padding: 0 !important;
-    border: 0 !important;
+    /* border kaldırıldı - sadece tablo için koruyacağız */
   }
   
   @page {
@@ -44,24 +51,72 @@
     margin: 0 !important;
     padding: 0 !important;
     /* background: none; */
-    overflow: hidden;
+    overflow: visible !important; /* overflow: hidden yerine visible kullanıyoruz */
   }
   
+  /* Sayfa konteynerı için yeni stil */
+  .flex.flex-col.gap-0 {
+    display: block !important;
+  }
+
   .a4-page {
     width: 210mm;
-    height: 297mm;
+    height: 297mm !important; /* Sabit yükseklik */
     margin: 0 !important;
     padding: 0 !important;
     border: none !important;
     box-shadow: none;
-    page-break-after: always;
+    page-break-after: always !important;
+    page-break-before: auto !important;
+    page-break-inside: avoid !important;
+    position: relative;
     overflow: hidden;
+  }
+
+  /* Son sayfada sayfa sonu olmaması için */
+  .a4-page:last-child {
+    page-break-after: avoid !important;
   }
   
   /* Yazdırma sırasında içerik alanı için kenar boşlukları */
   .a4-content {
     padding: 0;
     box-sizing: border-box;
+    height: 100%;
+    position: relative;
+  }
+
+  /* Tablo stilleri - yazdırma için özel */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+    border: 1px solid #000 !important;
+  }
+
+  table th,
+  table td {
+    border: 1px solid #000 !important;
+    padding: 8px !important;
+    font-size: 12px !important;
+    text-align: left !important;
+  }
+
+  table th {
+    background-color: #f5f5f5 !important;
+    font-weight: bold !important;
+  }
+
+  table tbody tr:nth-child(even) {
+    background-color: #f9f9f9 !important;
+  }
+
+  /* Tablo başlıkları için özel stil */
+  .bg-gray-100 {
+    background-color: #f5f5f5 !important;
+  }
+
+  .border-gray-300 {
+    border-color: #000 !important;
   }
   
   /* Yazdırma sırasında gizlenecek elementler */
@@ -90,11 +145,11 @@
   
   /* Yazdırma sırasında sayfa kesme ayarları */
   .page-break {
-    page-break-before: always;
+    page-break-before: always !important;
   }
   
   /* Yazdırma sırasında sayfa içinde kesme olmaması gereken elementler */
   .no-break {
-    page-break-inside: avoid;
+    page-break-inside: avoid !important;
   }
 }

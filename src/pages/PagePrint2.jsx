@@ -6,7 +6,7 @@ import { visitsService } from '../services/visits.service';
 import './PagePrint.css';
 import { useGroup } from '../contexts/GroupContext';
 
-const PagePrint = () => {  
+const PagePrint2 = () => {  
   const { selectedGroupContext } = useGroup();
   const [goldMembers, setGoldMembers] = useState([]);
   const [leaderMembers, setLeaderMembers] = useState([]);
@@ -292,4 +292,4 @@ const PagePrint = () => {
   );
 };
 
-export default PagePrint;
+export default PagePrint2;
