@@ -8,6 +8,7 @@ import { groupMembersService } from "../services/groupMembers.service";
 import { rolesService } from "../services/roles.service";
 import { usersService } from "../services/users.service";
 import { eventsService } from "../services/events.service";
+import { groupsStaticDatasService } from "../services/groupsStaticDatas.service";
 import { useGroup } from "../contexts/GroupContext";
 import { useUser } from "@/contexts/UserContext";
 import * as z from "zod";
@@ -156,6 +157,24 @@ const addNoteFormSchema = z.object({
   }),
 });
 
+const updateGroupDataFormSchema = z.object({
+  group: z.string().uuid({
+    message: "Geçerli bir grup seçiniz.",
+  }),
+  value: z.string().min(1, {
+    message: "Değer boş olamaz.",
+  }),
+  description: z.string().min(2, {
+    message: "Açıklama en az 2 karakter olmalıdır.",
+  }),
+  // Hidden fields - kullanıcıya gösterilmez ama API'ye gönderilir
+  category: z.string(),
+  subcategory: z.string().nullable().optional(),
+  data_type: z.string(),
+  display_name: z.string(),
+  key: z.string(),
+});
+
 const addGroupMembersFormSchema = z.object({
   user_id: z.string().uuid({
     message: "Kullanıcı seçiniz.",
@@ -215,12 +234,15 @@ function GroupDetail() {
   const [memberGlobalFilter, setMemberGlobalFilter] = useState("");
   const [openCategories, setOpenCategories] = useState([]);
   const [events, setEvents] = useState([]);
+  const [groupsStaticDatas, setGroupsStaticDatas] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedVisitor, setSelectedVisitor] = useState(null);
   const [addVisitorDialogOpen, setAddVisitorDialogOpen] = useState(false);
   const [updateVisitorDialogOpen, setUpdateVisitorDialogOpen] = useState(false);
   const [deleteVisitorDialogOpen, setDeleteVisitorDialogOpen] = useState(false);
   const [addNoteDialogOpen, setAddNoteDialogOpen] = useState(false);
+  const [updateGroupDataDialogOpen, setUpdateGroupDataDialogOpen] = useState(false);
+  const [selectedGroupData, setSelectedGroupData] = useState(null);
   const [addGroupMemberDialogOpen, setAddGroupMemberDialogOpen] = useState(false);
   const [updateGroupMemberDialogOpen, setUpdateGroupMemberDialogOpen] = useState(false);
   const [selectedGroupMember, setSelectedGroupMember] = useState(null);
@@ -282,6 +304,20 @@ function GroupDetail() {
     resolver: zodResolver(addNoteFormSchema),
     defaultValues: {
       content: "",
+    },
+  });
+
+  const updateGroupDataForm = useForm({
+    resolver: zodResolver(updateGroupDataFormSchema),
+    defaultValues: {
+      group: selectedGroupContext?.id || "",
+      value: "",
+      description: "",
+      category: "",
+      subcategory: "",
+      data_type: "",
+      display_name: "",
+      key: "",
     },
   });
 
@@ -358,6 +394,7 @@ function GroupDetail() {
     fetchUsers();
     fetchGroupMembers();
     fetchEvents();
+    fetchGroupsStaticDatas();
   }, [selectedGroupContext, navigate]);
 
   const fethVisitors = async () => {
@@ -478,6 +515,20 @@ function GroupDetail() {
     }
     catch (error) {
       console.error("Etkinlikler alınırken hata oluştu:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchGroupsStaticDatas = async () => {
+    if (!selectedGroupContext?.id) return;
+    try {
+      const response = await groupsStaticDatasService.getGroupsStaticDatas(selectedGroupContext.id);
+      setGroupsStaticDatas(response);
+      console.log("Grup statik verileri alındı:", response);
+    }
+    catch (error) {
+      console.error("Grup statik verileri alınırken hata oluştu:", error);
     } finally {
       setIsLoading(false);
     }
@@ -1044,6 +1095,53 @@ function GroupDetail() {
     }
   };
 
+  // Statik Veriler İşlemleri
+  const handleGroupDataClick = (groupData) => {
+    setSelectedGroupData(groupData);
+    updateGroupDataForm.reset({
+      group: groupData.group,
+      value: groupData.value.toString(),
+      description: groupData.description,
+      // Hidden fields - mevcut değerlerini koru
+      category: groupData.category,
+      subcategory: groupData.subcategory || "",
+      data_type: groupData.data_type,
+      display_name: groupData.display_name,
+      key: groupData.key,
+    });
+    setUpdateGroupDataDialogOpen(true);
+  };
+
+  const handleUpdateGroupData = async (data) => {
+    try {
+      setIsLoading(true);
+      await groupsStaticDatasService.updateGroupsStaticDatas(
+        selectedGroupData.id,
+        selectedGroupData.group,
+        {
+          group: data.group,
+          value: data.value,
+          description: data.description,
+          // Hidden fields - mevcut değerleri koru
+          category: data.category,
+          subcategory: data.subcategory,
+          data_type: data.data_type,
+          display_name: data.display_name,
+          key: data.key,
+        }
+      );
+      toast.success("Grup verisi başarıyla güncellendi");
+      setUpdateGroupDataDialogOpen(false);
+      updateGroupDataForm.reset();
+      await fetchGroupsStaticDatas(); // Verileri yenile
+    } catch (error) {
+      console.error("Grup verisi güncellenirken hata:", error);
+      toast.error("Grup verisi güncellenirken hata oluştu");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <>
       <div className="w-full max-w-6xl p-6">
@@ -1084,13 +1182,25 @@ function GroupDetail() {
             <Link to="/page-print">
               <Button variant="outline" className="flex items-center gap-2">
                 <Printer className="h-4 w-4" />
-                Yazdır
+                1
               </Button>
             </Link>
             <Link to="/page-print-2">
               <Button variant="outline" className="flex items-center gap-2">
                 <Printer className="h-4 w-4" />
-                Yazdır2
+                2
+              </Button>
+            </Link>
+            <Link to="/page-print-3">
+              <Button variant="outline" className="flex items-center gap-2">
+                <Printer className="h-4 w-4" />
+                3
+              </Button>
+            </Link>
+            <Link to="/page-print-4">
+              <Button variant="outline" className="flex items-center gap-2">
+                <Printer className="h-4 w-4" />
+                4
               </Button>
             </Link>
           </div>
@@ -1156,6 +1266,84 @@ function GroupDetail() {
                   ) : (
                     <div className="text-center py-8">
                       <p>Grup bilgisi bulunamadı.</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+              
+              {/* Grup Verileri Card */}
+              <Card className="mt-6">
+                <CardContent>
+                  {groupsStaticDatas.length > 0 ? (
+                    <div className="space-y-6">
+                      {/* Kategori bazında gruplandırma */}
+                      {Object.entries(
+                        groupsStaticDatas.reduce((acc, item) => {
+                          const category = item.category_display || item.category;
+                          if (!acc[category]) {
+                            acc[category] = [];
+                          }
+                          acc[category].push(item);
+                          return acc;
+                        }, {})
+                      ).map(([category, items]) => (
+                        <div key={category} className="space-y-3">
+                          <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                            {category}
+                          </h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {items.map((item) => (
+                              <div key={item.id} className="bg-gray-50 rounded-lg p-4 space-y-2 relative group">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="font-medium text-sm text-gray-900">
+                                    {item.display_name}
+                                  </h4>
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleGroupDataClick(item)}
+                                      className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0"
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                      item.is_active 
+                                        ? 'bg-green-100 text-green-800' 
+                                        : 'bg-gray-100 text-gray-800'
+                                    }`}>
+                                      {item.is_active ? 'Aktif' : 'Pasif'}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="space-y-1">
+                                  <div className="text-2xl font-bold text-blue-600">
+                                    {item.data_type === 'float' 
+                                      ? parseFloat(item.value).toFixed(1)
+                                      : item.value
+                                    }
+                                    {item.data_type === 'float' && item.key.includes('oran') && '%'}
+                                  </div>
+                                  {item.subcategory_display && (
+                                    <div className="text-xs text-blue-600 font-medium">
+                                      {item.subcategory_display}
+                                    </div>
+                                  )}
+                                  <div className="text-xs text-gray-600">
+                                    {item.description}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="text-gray-500 text-sm">
+                        Henüz grup verisi bulunmamaktadır.
+                      </div>
                     </div>
                   )}
                 </CardContent>
@@ -3262,6 +3450,156 @@ function GroupDetail() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Grup Verisi Düzenleme Dialog */}
+      <Dialog
+        open={updateGroupDataDialogOpen}
+        onOpenChange={setUpdateGroupDataDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Grup Verisini Düzenle</DialogTitle>
+            <DialogDescription>
+              {selectedGroupData?.display_name} verisini düzenleyin
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...updateGroupDataForm}>
+            <form
+              onSubmit={updateGroupDataForm.handleSubmit(handleUpdateGroupData)}
+              className="space-y-6"
+            >
+              <FormField
+                control={updateGroupDataForm.control}
+                name="group"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Grup</FormLabel>
+                    <FormControl>
+                      <Input
+                        value={selectedGroupData?.group_name || selectedGroupContext?.name || ""}
+                        disabled
+                        className="bg-gray-50"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={updateGroupDataForm.control}
+                name="value"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Değer</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Değer" 
+                        {...field} 
+                        type={selectedGroupData?.data_type === 'int' || selectedGroupData?.data_type === 'float' ? 'number' : 'text'}
+                        step={selectedGroupData?.data_type === 'float' ? '0.1' : undefined}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={updateGroupDataForm.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Açıklama</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Açıklama" 
+                        {...field} 
+                        rows={3}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {/* Hidden Fields - kullanıcıya gösterilmez */}
+              <FormField
+                control={updateGroupDataForm.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem className="hidden">
+                    <FormControl>
+                      <Input {...field} type="hidden" />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={updateGroupDataForm.control}
+                name="subcategory"
+                render={({ field }) => (
+                  <FormItem className="hidden">
+                    <FormControl>
+                      <Input {...field} type="hidden" />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={updateGroupDataForm.control}
+                name="data_type"
+                render={({ field }) => (
+                  <FormItem className="hidden">
+                    <FormControl>
+                      <Input {...field} type="hidden" />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={updateGroupDataForm.control}
+                name="display_name"
+                render={({ field }) => (
+                  <FormItem className="hidden">
+                    <FormControl>
+                      <Input {...field} type="hidden" />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={updateGroupDataForm.control}
+                name="key"
+                render={({ field }) => (
+                  <FormItem className="hidden">
+                    <FormControl>
+                      <Input {...field} type="hidden" />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setUpdateGroupDataDialogOpen(false)}
+                >
+                  İptal
+                </Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      Güncelleniyor...
+                    </>
+                  ) : (
+                    "Güncelle"
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -65,6 +65,9 @@ export const ENDPOINTS = {
   CREATE_EVENT: "/organization/events/",
   UPDATE_EVENT: (id) => `/organization/events/${id}/`,
   DELETE_EVENT: (id) => `/organization/events/${id}/`,
+  // Groups Static Datas endpoints
+  GET_GROUPS_STATIC_DATAS: (groupId) => `/organization/group-static-data/?group=${groupId}`,
+  UPDATE_GROUPS_STATIC_DATA: (dataId) => `/organization/group-static-data/${dataId}/`,
 };
 
 // API istekleri için varsayılan ayarlar

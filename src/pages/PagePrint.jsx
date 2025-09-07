@@ -3,6 +3,8 @@ import bniLogo from '../assets/bni-logo_brandlogos.net_vdxgj.png';
 import { groupMembersService } from '../services/groupMembers.service';
 import { eventsService } from '../services/events.service';
 import { visitsService } from '../services/visits.service';
+import { groupsStaticDatasService } from '../services/groupsStaticDatas.service';
+import { groupMeetingsService } from '../services/groupMeetings.service';
 import './PagePrint.css';
 import { useGroup } from '../contexts/GroupContext';
 
@@ -13,17 +15,22 @@ const PagePrint = () => {
   const [events, setEvents] = useState([]);
   const [visitors, setVisitors] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [groupsStaticDatas, setGroupsStaticDatas] = useState([]);
+  const [groupMeetings, setGroupMeetings] = useState([]);
 
   useEffect(() => {
     fetchGoldMembers();
     fetchLeaderMembers();
     fetchEvents();
-    fethVisitors();
+    fethVisitors(); // Bu fonksiyon içinde groupMeetings de çekiliyor
+    fetchGroupsStaticDatas();
     console.log("selectedGroupContext", selectedGroupContext);
     console.log("goldMembers", goldMembers);
     console.log("leaderMembers", leaderMembers);
     console.log("events", events);
     console.log("visitors", visitors);
+    console.log("groupsStaticDatas", groupsStaticDatas);
+    console.log("groupMeetings", groupMeetings);
   }, []);
 
   const fetchGoldMembers = async () => {
@@ -68,9 +75,46 @@ const PagePrint = () => {
   const fethVisitors = async () => {
     setIsLoading(true);
     try {
-      const response = await visitsService.getVisits(selectedGroupContext.id);
-      console.log("Ziyaretçiler alındı:", response);
-      setVisitors(response);
+      const [visitorsResponse, meetingsResponse] = await Promise.all([
+        visitsService.getVisits(selectedGroupContext.id),
+        groupMeetingsService.getGroupMeetings(selectedGroupContext.id)
+      ]);
+      
+      console.log("Ziyaretçiler alındı:", visitorsResponse);
+      console.log("Toplantılar alındı:", meetingsResponse);
+      
+      // Bugüne en yakın toplantıyı bul
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      // Toplantıları tarihe göre sırala (bugüne en yakından başlayarak)
+      const sortedMeetings = meetingsResponse
+        .map(meeting => ({
+          ...meeting,
+          dateObj: new Date(meeting.date)
+        }))
+        .sort((a, b) => {
+          const diffA = Math.abs(a.dateObj - today);
+          const diffB = Math.abs(b.dateObj - today);
+          return diffA - diffB;
+        });
+      
+      if (sortedMeetings.length > 0) {
+        const nearestMeeting = sortedMeetings[0];
+        console.log("Bugüne en yakın toplantı:", nearestMeeting);
+        
+        // Sadece en yakın toplantı tarihindeki ziyaretçileri filtrele
+        const filteredVisitors = visitorsResponse.filter(visitor => 
+          visitor.meeting === nearestMeeting.id
+        );
+        
+        console.log("Filtrelenmiş ziyaretçiler:", filteredVisitors);
+        setVisitors(filteredVisitors);
+      } else {
+        console.log("Toplantı bulunamadı");
+        setVisitors([]);
+      }
+      
       setIsLoading(false);
     } catch (error) {
       console.error("Ziyaretçiler alınırken hata oluştu:", error);
@@ -78,6 +122,22 @@ const PagePrint = () => {
       setIsLoading(false);
     }
   };
+
+  const fetchGroupsStaticDatas = async () => {
+    if (!selectedGroupContext?.id) return;
+    try {
+      const response = await groupsStaticDatasService.getGroupsStaticDatas(selectedGroupContext.id);
+      setGroupsStaticDatas(response);
+      console.log("Grup statik verileri alındı:", response);
+    }
+    catch (error) {
+      console.error("Grup statik verileri alınırken hata oluştu:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // fetchGroupMeetings fonksiyonu kaldırıldı - artık fethVisitors içinde çağırılıyor
 
   const handlePrint = () => {
     window.print();
@@ -129,15 +189,15 @@ const PagePrint = () => {
                   </div>
                   <div className='flex flex-col items-center gap-2 mt-[20px] autoFix'>
                     <div className='font-bold text-md'>Yönlendirme</div>
-                    <div className='font-bold text-5xl text-[#C80F2E]'>911</div>
+                    <div className='font-bold text-5xl text-[#C80F2E]'>{groupsStaticDatas.find(data => data.key === "is_yonlendirmesi")?.value}</div>
                   </div>
                   <div className='flex flex-col items-center gap-2 mt-[20px] autoFix'>
                     <div className='font-bold text-md'>Ciro</div>
-                    <div className='font-bold text-2xl text-[#C80F2E]'>₺19.215.107</div>
+                    <div className='font-bold text-2xl text-[#C80F2E]'>₺{groupsStaticDatas.find(data => data.key === "ciro")?.value}</div>
                   </div>
                   <div className='flex flex-col items-center gap-2 mt-[20px] autoFix'>
                     <div className='font-bold text-md'>1'E 1</div>
-                    <div className='font-bold text-5xl text-[#C80F2E] autoFix'>634</div>
+                    <div className='font-bold text-5xl text-[#C80F2E] autoFix'>{groupsStaticDatas.find(data => data.key === "bir_e_bir")?.value}</div>
                   </div>
                   <div className='flex flex-col items-center gap-2 mt-[20px] autoFix'>
                     <div className='font-bold text-md'>Ziyaretçi</div>
@@ -148,23 +208,23 @@ const PagePrint = () => {
                   <div className='flex flex-col items-center'>
                     <div className='flex flex-col items-center'>
                       <div className='font-bold text-center text-md p-[7px] pb-0 w-full autoFix'>iŞ YÖNLENDİRME</div>
-                      <div className='text-center text-sm w-full autoFix'>Muhammed Emin Tezcan</div>
+                      <div className='text-center text-sm w-full autoFix'>{groupsStaticDatas.find(data => data.key === "en_cok_is_yonlendiren")?.description}</div>
                     </div>
-                    <div className='font-bold text-5xl text-[#C80F2E] p-[25px] autoFix'>9</div>
+                    <div className='font-bold text-5xl text-[#C80F2E] p-[25px] autoFix'>{groupsStaticDatas.find(data => data.key === "en_cok_is_yonlendiren")?.value}</div>
                   </div>
                   <div className='flex flex-col items-center'>
                     <div className='flex flex-col items-center'>
                       <div className='font-bold text-center text-md w-full autoFix'>ZİYARETÇİ DAVETİ</div>
-                      <div className='text-center text-sm w-full autoFix'>Yusuf Ziya Nisanoğlu</div>
+                      <div className='text-center text-sm w-full autoFix'>{groupsStaticDatas.find(data => data.key === "en_cok_ziyaretci_davet_eden")?.description}</div>
                     </div>
-                    <div className='font-bold text-5xl text-[#C80F2E] p-[25px] autoFix'>3</div>
+                    <div className='font-bold text-5xl text-[#C80F2E] p-[25px] autoFix'>{groupsStaticDatas.find(data => data.key === "en_cok_ziyaretci_davet_eden")?.value}</div>
                   </div>
                   <div className='flex flex-col items-center'>
                     <div className='flex flex-col items-center'>
                       <div className='font-bold text-center text-md w-full autoFix'>CİRO</div>
-                      <div className='text-center text-sm w-full autoFix'>Zafer Yıldırım</div>
+                      <div className='text-center text-sm w-full autoFix'>{groupsStaticDatas.find(data => data.key === "en_cok_ciro_yapan")?.description}</div>
                     </div>
-                    <div className='font-bold text-2xl text-[#C80F2E] p-[20px] autoFix'>₺19.215.107</div>
+                    <div className='font-bold text-2xl text-[#C80F2E] p-[20px] autoFix'>₺{groupsStaticDatas.find(data => data.key === "en_cok_ciro_yapan")?.value}</div>
                   </div>
                 </div>
                 <div className='w-[1px] h-auto bg-[#000000]'></div>
@@ -180,8 +240,8 @@ const PagePrint = () => {
                   </ul>
                   <div className='flex flex-col items-center gap-3 p-[10px] mt-[10px] bg-[#D11C2F] autoFix'>
                     <div className='text-xl text-white font-bold'>Genişletilmiş Sunum</div>
-                    <div className='text-xl text-white font-bold'>Dilan Özdemir</div>
-                    <div className='text-xl text-white font-bold'>Catering Hizmetleri</div>
+                    <div className='text-xl text-white font-bold'>{groupsStaticDatas.find(data => data.key === "genisletilmis_sunum")?.value}</div>
+                    <div className='text-xl text-white font-bold'>{groupsStaticDatas.find(data => data.key === "genisletilmis_sunum")?.description}</div>
                   </div>
                   <div className='flex flex-col items-center gap-2 mt-[10px] autoFix'>
                     <div className='text-xl'>Katkı Anonsları</div>
@@ -200,9 +260,8 @@ const PagePrint = () => {
                   <div className='text-xl text-center mt-[15px] autoFix'>Kapanış</div>
                   <div className='flex flex-col flex-grow justify-between gap-2 mt-[10px] autoFix'>
                     <div className='text-xl text-[#D11C2F] font-bold underline text-center mt-[25px] autoFix'>Haftanın Alıntısı</div>
-                    <div className='text-center pl-[25px] pr-[25px] autoFix'>Fırsatlar durup dururken karşınıza çıkmaz, onları siz
-                    yaratırsınız. </div>
-                    <div className='text-end pr-[15px] autoFix'>Chris Grosser</div>
+                    <div className='text-center pl-[25px] pr-[25px] autoFix'>{groupsStaticDatas.find(data => data.key === "haftanin_alintisi")?.value}</div>
+                    <div className='text-end pr-[15px] autoFix'></div>
                   </div>
                 </div>
                 <div className='w-[1px] h-auto bg-[#000000]'></div>

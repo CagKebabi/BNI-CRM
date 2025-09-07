@@ -90,24 +90,47 @@
   table {
     border-collapse: collapse !important;
     width: 100% !important;
-    border: 1px solid #000 !important;
+    /* border: 1px solid #000 !important; */
+  }
+
+  /* ul ve li elementleri için özel print stilleri */
+  /* ul {
+    margin: 0 !important;
+    padding: 0 !important;
+    list-style: none !important;
+  }
+
+  li {
+    margin: 0 !important;
+    padding: 4px !important;
+    list-style: none !important;
+  } */
+
+  /* Line clamp için özel stil */
+  .line-clamp-1 {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 1 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    line-height: 1.2 !important;
   }
 
   table th,
   table td {
-    border: 1px solid #000 !important;
-    padding: 8px !important;
-    font-size: 12px !important;
-    text-align: left !important;
+    /* border: 1px solid #000 !important; */
+    /* padding: 8px !important; */
+    /* font-size: 12px !important; */
+    /* text-align: center !important; */
   }
 
   table th {
-    background-color: #f5f5f5 !important;
-    font-weight: bold !important;
+    /* background-color: #f5f5f5 !important;
+    font-weight: bold !important; */
   }
 
   table tbody tr:nth-child(even) {
-    background-color: #f9f9f9 !important;
+    /* background-color: #f9f9f9 !important; */
   }
 
   /* Tablo başlıkları için özel stil */

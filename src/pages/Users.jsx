@@ -86,6 +86,9 @@ const formSchema = z.object({
     gsm: z.string().min(10, {
         message: "GSM en az 10 karakter olmalıdır.",
     }),
+    category: z.string(),
+    company: z.string(),
+    slogan: z.string(),
     group_id: z.union([
         z.string().uuid({
             message: "Geçerli bir grup seçiniz.",
@@ -107,6 +110,9 @@ const formSchemaUserUpdate = z.object({
     gsm: z.string().min(10, {
         message: "GSM en az 10 karakter olmalıdır.",
     }),
+    category: z.string(),
+    company: z.string(),
+    slogan: z.string(),
     is_active: z.boolean(),
     group_id: z.union([
         z.string().uuid({
@@ -138,6 +144,9 @@ const Users = () => {
         first_name: "",
         last_name: "",
         gsm: "",
+        category: "",
+        company: "",
+        slogan: "",
         group_id: "", //isteğe bağlı
         },
     });
@@ -149,6 +158,9 @@ const Users = () => {
         last_name: "",
         gsm: "",
         is_active: false,
+        category: "",
+        company: "",
+        slogan: "",
         group_id: "", //isteğe bağlı
         },
     });
@@ -229,6 +241,27 @@ const Users = () => {
             header: "Soyad",
             cell: ({ row }) => (
                 <div>{row.original.last_name || "Belirtilmemiş"}</div>
+            ),
+        },
+        {
+            accessorKey: "category",
+            header: "Kategori",
+            cell: ({ row }) => (
+                <div>{row.original.category || "Belirtilmemiş"}</div>
+            ),
+        },
+        {
+            accessorKey: "company",
+            header: "Şirket",
+            cell: ({ row }) => (
+                <div>{row.original.company || "Belirtilmemiş"}</div>
+            ),
+        },
+        {
+            accessorKey: "slogan",
+            header: "Slogan",
+            cell: ({ row }) => (
+                <div>{row.original.slogan || "Belirtilmemiş"}</div>
             ),
         },
         {
@@ -346,6 +379,9 @@ const Users = () => {
         formUpdate.setValue('gsm', user.gsm);
         formUpdate.setValue('is_active', user.is_active);
         formUpdate.setValue('group_id', user.group === null ? "Not selected" : user.group);
+        formUpdate.setValue('category', user.category);
+        formUpdate.setValue('company', user.company);
+        formUpdate.setValue('slogan', user.slogan);
         
         setUpdateUserDialogOpen(true);
     };
@@ -376,6 +412,9 @@ const Users = () => {
                 last_name: "",
                 gsm: "",
                 group_id: "",
+                category: "",
+                company: "",
+                slogan: "",
             });
         }
     };
@@ -403,7 +442,7 @@ const Users = () => {
     
     return (
         <>
-            <div className="max-w-4xl p-6">
+            <div className="max-w-6xl p-6">
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold mb-6">Kullanıcılar</h1>
                     <Button variant="default" size="icon" onClick={() => setAddUserDialogOpen(true)}>
@@ -506,7 +545,7 @@ const Users = () => {
                         </DialogDescription>
                     </DialogHeader>
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(handleAddUser)} className="space-y-6" autoComplete="off">
+                        <form onSubmit={form.handleSubmit(handleAddUser)} className="space-y-6 h-[50vh] overflow-y-auto p-1" autoComplete="off">
                             <FormField
                                 control={form.control}
                                 name="email"
@@ -561,6 +600,45 @@ const Users = () => {
                                         <FormLabel>GSM</FormLabel>
                                         <FormControl>
                                             <Input placeholder="GSM" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="category"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Kategori</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Kategori" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="company"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Şirket</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Şirket" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="slogan"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Slogan</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Slogan" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -653,7 +731,7 @@ const Users = () => {
                         </DialogDescription>
                     </DialogHeader>
                     <Form {...formUpdate}>
-                        <form onSubmit={formUpdate.handleSubmit(handleUpdateUser)} className="space-y-6" autoComplete="off">
+                        <form onSubmit={formUpdate.handleSubmit(handleUpdateUser)} className="space-y-6 h-[50vh] overflow-y-auto p-1" autoComplete="off">
                             <FormField
                                 control={formUpdate.control}
                                 name="first_name"
@@ -688,6 +766,45 @@ const Users = () => {
                                         <FormLabel>GSM</FormLabel>
                                         <FormControl>
                                             <Input placeholder="GSM" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={formUpdate.control}
+                                name="category"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Kategori</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Kategori" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={formUpdate.control}
+                                name="company"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Şirket</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Şirket" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={formUpdate.control}
+                                name="slogan"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Slogan</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Slogan" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
