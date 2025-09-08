@@ -114,7 +114,7 @@ import {
 } from "lucide-react";
 
 const addVisitorFormSchema = z.object({
-  visit_date: z.string(),
+  // visit_date: z.string(),
   group: z.string().uuid({
     message: "Geçerli bir grup seçiniz.",
   }),
@@ -261,7 +261,7 @@ function GroupDetail() {
   const addVisitorForm = useForm({
     resolver: zodResolver(addVisitorFormSchema),
     defaultValues: {
-      visit_date: new Date(),
+      // visit_date: new Date(),
       group: selectedGroupContext?.id || "",
       meeting: "",
       full_name: "",
@@ -411,6 +411,28 @@ function GroupDetail() {
     }
   };
 
+  // Bugüne en yakın meeting'i bulan fonksiyon
+  const findNearestMeeting = (meetings) => {
+    if (!meetings || meetings.length === 0) return null;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Saati sıfırla
+    
+    // Toplantıları tarihe göre sırala (bugüne en yakından başlayarak)
+    const sortedMeetings = meetings
+      .map(meeting => ({
+        ...meeting,
+        dateObj: new Date(meeting.date)
+      }))
+      .sort((a, b) => {
+        const diffA = Math.abs(a.dateObj - today);
+        const diffB = Math.abs(b.dateObj - today);
+        return diffA - diffB;
+      });
+    
+    return sortedMeetings.length > 0 ? sortedMeetings[0] : null;
+  };
+
   const fetchGroupMeetings = async () => {
     if (!selectedGroupContext?.id) return;
 
@@ -421,11 +443,31 @@ function GroupDetail() {
       );
       console.log("Grup toplantıları alındı:", response);
       setGroupMeetings(response);
+      
+      // Bugüne en yakın meeting'i bul ve form'a set et
+      const nearestMeeting = findNearestMeeting(response);
+      if (nearestMeeting) {
+        addVisitorForm.reset({
+          group: selectedGroupContext?.id || "",
+          meeting: nearestMeeting.id,
+          full_name: "",
+          category: "",
+          company: "",
+          phone: "",
+          email: "",
+          invited_by: "",
+          status: "",
+          note: "",
+          attended: false,
+          contacted: false,
+          contacted_by: "",
+          rating: 0,
+        });
+      }
     } catch (error) {
       console.error("Grup toplantıları alınırken hata oluştu:", error);
     } finally {
       setIsLoading(false);
-      addVisitorForm.reset();
     }
   };
 
@@ -563,12 +605,12 @@ function GroupDetail() {
         <div>
           {row.original.roles && row.original.roles.length > 0 ? (
             <div className="flex flex-wrap gap-1">
-              {row.original.roles.map((role) => (
+              {Array.from(new Set(row.original.roles.map(role => role.role))).map((roleName, index) => (
                 <span
-                  key={role.id}
+                  key={index}
                   className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-full text-xs font-medium"
                 >
-                  {role.role}
+                  {roleName}
                 </span>
               ))}
             </div>
@@ -716,7 +758,24 @@ function GroupDetail() {
       toast.error("Ziyaretçi eklenemedi");
     } finally {
       setIsLoading(false);
-      addVisitorForm.reset(); // Formu sıfırla
+      // Form resetlerken en yakın meeting'i tekrar seç
+      const nearestMeeting = findNearestMeeting(groupMeetings);
+      addVisitorForm.reset({
+        group: selectedGroupContext?.id || "",
+        meeting: nearestMeeting?.id || "",
+        full_name: "",
+        category: "",
+        company: "",
+        phone: "",
+        email: "",
+        invited_by: "",
+        status: "",
+        note: "",
+        attended: false,
+        contacted: false,
+        contacted_by: "",
+        rating: 0,
+      });
     }
   };
 
@@ -1145,7 +1204,7 @@ function GroupDetail() {
   return (
     <>
       <div className="w-full max-w-6xl p-6">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between flex-wrap gap-2 items-center mb-6">
           <div>
             <div>
               <div className="flex items-center gap-2 text-lg font-semibold">
@@ -1170,15 +1229,15 @@ function GroupDetail() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* <Button
               variant="outline"
               onClick={() => navigate("/group-list")}
               className="flex items-center gap-2"
             >
               <Undo2 className="h-4 w-4" />
               Gruplara Dön
-            </Button>
+            </Button> */}
             <Link to="/page-print">
               <Button variant="outline" className="flex items-center gap-2">
                 <Printer className="h-4 w-4" />
@@ -1207,7 +1266,7 @@ function GroupDetail() {
         </div>
         <div className="flex w-full flex-col gap-6">
           <Tabs defaultValue="info" className="w-full">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="w-full h-auto flex-wrap">
               <TabsTrigger value="info">Grup Bilgileri</TabsTrigger>
               <TabsTrigger value="visitors">Ziyaretçiler</TabsTrigger>
               <TabsTrigger value="members">Üyeler</TabsTrigger>
@@ -2004,7 +2063,7 @@ function GroupDetail() {
               onSubmit={addVisitorForm.handleSubmit(handleAddVisitor)}
               className="space-y-6 max-h-[50vh] overflow-y-auto p-3"
             >
-              <FormField
+              {/* <FormField
                 control={addVisitorForm.control}
                 name="visit_date"
                 render={({ field }) => (
@@ -2051,7 +2110,7 @@ function GroupDetail() {
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+              /> */}
               <FormField
                 control={addVisitorForm.control}
                 name="group"
@@ -2077,7 +2136,7 @@ function GroupDetail() {
                     <FormLabel>Toplantı</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>

@@ -68,7 +68,17 @@ const PagePrint4 = () => {
   };
 
   const handlePrint = () => {
+    // PDF adını dinamik olarak ayarla
+    const originalTitle = document.title;
+    const currentDate = new Date().toLocaleDateString('tr-TR').replace(/\./g, '-');
+    document.title = `BNI_${selectedGroupContext?.name || 'Grup'}_Ziyaretci_Yoklama_${currentDate}`;
+    
     window.print();
+    
+    // Yazdırma işlemi tamamlandıktan sonra orijinal title'ı geri yükle
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1000);
   }
 
   return (
@@ -101,6 +111,9 @@ const PagePrint4 = () => {
                   </div>
                 </div>
                 <div className='flex flex-col h-full'>
+                    <div>
+                      Ziyaretçi Yoklama Listesi
+                    </div>
                     <table className="w-full border-collapse mt-4 autoFix">
                     <thead>
                       <tr>

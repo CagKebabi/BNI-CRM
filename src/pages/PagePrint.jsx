@@ -5,6 +5,7 @@ import { eventsService } from '../services/events.service';
 import { visitsService } from '../services/visits.service';
 import { groupsStaticDatasService } from '../services/groupsStaticDatas.service';
 import { groupMeetingsService } from '../services/groupMeetings.service';
+import { presentationsService } from '../services/presentations.service';
 import './PagePrint.css';
 import { useGroup } from '../contexts/GroupContext';
 
@@ -17,6 +18,7 @@ const PagePrint = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [groupsStaticDatas, setGroupsStaticDatas] = useState([]);
   const [groupMeetings, setGroupMeetings] = useState([]);
+  const [presentations, setPresentations] = useState([]);
 
   useEffect(() => {
     fetchGoldMembers();
@@ -24,6 +26,7 @@ const PagePrint = () => {
     fetchEvents();
     fethVisitors(); // Bu fonksiyon içinde groupMeetings de çekiliyor
     fetchGroupsStaticDatas();
+    fetchPresentations();
     console.log("selectedGroupContext", selectedGroupContext);
     console.log("goldMembers", goldMembers);
     console.log("leaderMembers", leaderMembers);
@@ -31,6 +34,7 @@ const PagePrint = () => {
     console.log("visitors", visitors);
     console.log("groupsStaticDatas", groupsStaticDatas);
     console.log("groupMeetings", groupMeetings);
+    console.log("presentations", presentations);
   }, []);
 
   const fetchGoldMembers = async () => {
@@ -137,10 +141,37 @@ const PagePrint = () => {
     }
   };
 
+  const fetchPresentations = async () => {
+    if (!selectedGroupContext?.id) return;
+
+    setIsLoading(true);
+    try {
+      const response = await presentationsService.getPresentations(
+        selectedGroupContext.id
+      );
+      console.log("Sunumlar alındı:", response);
+      setPresentations(response);
+    } catch (error) {
+      console.error("Sunumlar alınırken hata oluştu:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // fetchGroupMeetings fonksiyonu kaldırıldı - artık fethVisitors içinde çağırılıyor
 
   const handlePrint = () => {
+    // PDF adını dinamik olarak ayarla
+    const originalTitle = document.title;
+    const currentDate = new Date().toLocaleDateString('tr-TR').replace(/\./g, '-');
+    document.title = `BNI_${selectedGroupContext?.name || 'Grup'}_Toplanti_Agendassi_${currentDate}`;
+    
     window.print();
+    
+    // Yazdırma işlemi tamamlandıktan sonra orijinal title'ı geri yükle
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1000);
   }
 
   return (
@@ -240,8 +271,27 @@ const PagePrint = () => {
                   </ul>
                   <div className='flex flex-col items-center gap-3 p-[10px] mt-[10px] bg-[#D11C2F] autoFix'>
                     <div className='text-xl text-white font-bold'>Genişletilmiş Sunum</div>
-                    <div className='text-xl text-white font-bold'>{groupsStaticDatas.find(data => data.key === "genisletilmis_sunum")?.value}</div>
-                    <div className='text-xl text-white font-bold'>{groupsStaticDatas.find(data => data.key === "genisletilmis_sunum")?.description}</div>
+                    {(() => {
+                      // Bugüne en yakın presentation'ı bul
+                      const currentDate = new Date();
+                      const futureOrTodayPresentations = presentations
+                        .filter(presentation => new Date(presentation.meeting_date) >= currentDate)
+                        .sort((a, b) => new Date(a.meeting_date) - new Date(b.meeting_date));
+                      
+                      const nearestPresentation = futureOrTodayPresentations[0];
+                      
+                      return nearestPresentation ? (
+                        <>
+                          <div className='text-xl text-white font-bold'>{nearestPresentation.user_full_name}</div>
+                          <div className='text-xl text-white font-bold'>{nearestPresentation.category || 'Üye Kategorisi Belirtilmemiş'}</div>
+                        </>
+                      ) : (
+                        <>
+                          <div className='text-xl text-white font-bold'>-</div>
+                          <div className='text-xl text-white font-bold'>-</div>
+                        </>
+                      );
+                    })()}
                   </div>
                   <div className='flex flex-col items-center gap-2 mt-[10px] autoFix'>
                     <div className='text-xl'>Katkı Anonsları</div>
