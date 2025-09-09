@@ -124,12 +124,8 @@ const addVisitorFormSchema = z.object({
   full_name: z.string().min(2, {
     message: "Ad en az 2 karakter olmalıdır.",
   }),
-  category: z.string().min(2, {
-    message: "Kategori en az 2 karakter olmalıdır.",
-  }),
-  company: z.string().min(2, {
-    message: "Şirket adı en az 2 karakter olmalıdır.",
-  }),
+  category: z.string(),
+  company: z.string(),
   phone: z.string().min(10, {
     message: "Telefon numarası en az 10 karakter olmalıdır.",
   }),
@@ -164,9 +160,11 @@ const updateGroupDataFormSchema = z.object({
   value: z.string().min(1, {
     message: "Değer boş olamaz.",
   }),
-  description: z.string().min(2, {
-    message: "Açıklama en az 2 karakter olmalıdır.",
-  }),
+  description: z.string().optional(),
+  member_id: z.string().optional().refine(
+    (val) => !val || val === "" || z.string().uuid().safeParse(val).success,
+    { message: "Geçerli bir üye ID'si olmalıdır" }
+  ), // Network liderleri için üye seçimi
   // Hidden fields - kullanıcıya gösterilmez ama API'ye gönderilir
   category: z.string(),
   subcategory: z.string().nullable().optional(),
@@ -252,7 +250,7 @@ function GroupDetail() {
   const [addOpenCategoriesDialogOpen, setAddOpenCategoriesDialogOpen] = useState(false);
   const [addEventDialogOpen, setAddEventDialogOpen] = useState(false);
   const [updateEventDialogOpen, setUpdateEventDialogOpen] = useState(false);
-  const [ selectedEvent, setSelectedEvent ] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
   const [groupMeetings, setGroupMeetings] = useState([]);
   const [loadingMeetings, setLoadingMeetings] = useState(false);
 
@@ -313,6 +311,7 @@ function GroupDetail() {
       group: selectedGroupContext?.id || "",
       value: "",
       description: "",
+      member_id: "",
       category: "",
       subcategory: "",
       data_type: "",
@@ -1157,10 +1156,23 @@ function GroupDetail() {
   // Statik Veriler İşlemleri
   const handleGroupDataClick = (groupData) => {
     setSelectedGroupData(groupData);
+    
+    // Network liderleri kategorisi için özel işlem
+    let member_id = "";
+    if (groupData.category === "network_liderleri") {
+      // Description'dan üye adını bulup member_id'yi ayarla
+      const memberName = groupData.description;
+      const member = groupMembers.find(member => 
+        `${member.first_name} ${member.last_name}` === memberName
+      );
+      member_id = member ? member.id : "";
+    }
+    
     updateGroupDataForm.reset({
       group: groupData.group,
       value: groupData.value.toString(),
       description: groupData.description,
+      member_id: member_id,
       // Hidden fields - mevcut değerlerini koru
       category: groupData.category,
       subcategory: groupData.subcategory || "",
@@ -1172,15 +1184,39 @@ function GroupDetail() {
   };
 
   const handleUpdateGroupData = async (data) => {
+    // Validation kontrolleri
+    if (selectedGroupData.category === "network_liderleri") {
+      if (!data.member_id) {
+        toast.error("Lütfen bir üye seçiniz");
+        return;
+      }
+    } else {
+      if (!data.description || data.description.trim() === "") {
+        toast.error("Lütfen açıklama giriniz");
+        return;
+      }
+    }
+    
     try {
       setIsLoading(true);
+      
+      // Network liderleri kategorisi için özel işlem
+      let finalDescription = data.description || "";
+      if (selectedGroupData.category === "network_liderleri" && data.member_id) {
+        // Seçilen üyenin adını description olarak ayarla
+        const selectedMember = groupMembers.find(member => member.id === data.member_id);
+        if (selectedMember) {
+          finalDescription = `${selectedMember.first_name} ${selectedMember.last_name}`;
+        }
+      }
+      
       await groupsStaticDatasService.updateGroupsStaticDatas(
         selectedGroupData.id,
         selectedGroupData.group,
         {
           group: data.group,
           value: data.value,
-          description: data.description,
+          description: finalDescription,
           // Hidden fields - mevcut değerleri koru
           category: data.category,
           subcategory: data.subcategory,
@@ -1474,7 +1510,7 @@ function GroupDetail() {
                               <TableCell>{visitor.category}</TableCell>
                               <TableCell>
                                 {new Date(
-                                  visitor.visit_date
+                                  visitor.meeting_date
                                 ).toLocaleDateString("tr-TR")}
                               </TableCell>
                               <TableCell>
@@ -3524,7 +3560,9 @@ function GroupDetail() {
           </DialogHeader>
           <Form {...updateGroupDataForm}>
             <form
-              onSubmit={updateGroupDataForm.handleSubmit(handleUpdateGroupData)}
+              onSubmit={updateGroupDataForm.handleSubmit(handleUpdateGroupData, (errors) => {
+                console.log("Form validation errors:", errors);
+              })}
               className="space-y-6"
             >
               <FormField
@@ -3562,23 +3600,61 @@ function GroupDetail() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={updateGroupDataForm.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Açıklama</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Açıklama" 
-                        {...field} 
-                        rows={3}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Network liderleri kategorisi için üye seçimi */}
+              {selectedGroupData?.category === "network_liderleri" ? (
+                <FormField
+                  control={updateGroupDataForm.control}
+                  name="member_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Üye Seçimi</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Üye seçiniz" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {groupMembers.length > 0 ? (
+                            groupMembers.map((member) => (
+                              <SelectItem key={member.id} value={member.id}>
+                                {member.first_name} {member.last_name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="no-data" disabled>
+                              Üye bulunamadı
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : (
+                <FormField
+                  control={updateGroupDataForm.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Açıklama</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Açıklama" 
+                          {...field}
+                          value={field.value || ""}
+                          rows={3}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
               
               {/* Hidden Fields - kullanıcıya gösterilmez */}
               <FormField
@@ -3587,7 +3663,7 @@ function GroupDetail() {
                 render={({ field }) => (
                   <FormItem className="hidden">
                     <FormControl>
-                      <Input {...field} type="hidden" />
+                      <Input {...field} type="hidden" value={field.value || ""} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -3598,7 +3674,7 @@ function GroupDetail() {
                 render={({ field }) => (
                   <FormItem className="hidden">
                     <FormControl>
-                      <Input {...field} type="hidden" />
+                      <Input {...field} type="hidden" value={field.value || ""} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -3609,7 +3685,7 @@ function GroupDetail() {
                 render={({ field }) => (
                   <FormItem className="hidden">
                     <FormControl>
-                      <Input {...field} type="hidden" />
+                      <Input {...field} type="hidden" value={field.value || ""} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -3620,7 +3696,7 @@ function GroupDetail() {
                 render={({ field }) => (
                   <FormItem className="hidden">
                     <FormControl>
-                      <Input {...field} type="hidden" />
+                      <Input {...field} type="hidden" value={field.value || ""} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -3631,11 +3707,25 @@ function GroupDetail() {
                 render={({ field }) => (
                   <FormItem className="hidden">
                     <FormControl>
-                      <Input {...field} type="hidden" />
+                      <Input {...field} type="hidden" value={field.value || ""} />
                     </FormControl>
                   </FormItem>
                 )}
               />
+              {/* Member ID hidden field for non-network leader categories */}
+              {selectedGroupData?.category !== "network_liderleri" && (
+                <FormField
+                  control={updateGroupDataForm.control}
+                  name="member_id"
+                  render={({ field }) => (
+                    <FormItem className="hidden">
+                      <FormControl>
+                        <Input {...field} type="hidden" value={field.value || ""} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              )}
               <DialogFooter>
                 <Button
                   type="button"

@@ -215,7 +215,11 @@ const PagePrint = () => {
                   <div>
                     <div className='font-bold text-center text-md p-[7px] bg-[#F3F3F3] mt-[15px] w-full autoFix'>{`RAKAMLARLA ${selectedGroupContext?.name.toUpperCase()}`}</div>
                     <div>
-                      <div className='font-bold text-sm text-center'>{new Date().toLocaleDateString('tr-TR')} <span className='font-light text-sm'>Tarihi İtibariyle</span></div>
+                      <div className='font-bold text-sm text-center'>{(() => {
+                        const today = new Date();
+                        const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                        return firstDayOfMonth.toLocaleDateString('tr-TR');
+                      })()} <span className='font-light text-sm'>Tarihi İtibariyle</span></div>
                     </div>
                   </div>
                   <div className='flex flex-col items-center gap-2 mt-[20px] autoFix'>
@@ -232,9 +236,13 @@ const PagePrint = () => {
                   </div>
                   <div className='flex flex-col items-center gap-2 mt-[20px] autoFix'>
                     <div className='font-bold text-md'>Ziyaretçi</div>
-                    <div className='font-bold text-5xl text-[#C80F2E] autoFix'>{visitors.length}</div>
+                    <div className='font-bold text-5xl text-[#C80F2E] autoFix'>{groupsStaticDatas.find(data => data.key === "ziyaretci")?.value}</div>
                   </div>
-                  <div className='font-bold text-center text-md p-[7px] bg-[#F3F3F3] mt-[15px] w-full autoFix'>{new Date().toLocaleString('tr-TR', { month: 'long' }).toUpperCase()} AYI</div>
+                  <div className='font-bold text-center text-md p-[7px] bg-[#F3F3F3] mt-[15px] w-full autoFix'>{(() => {
+                    const previousMonth = new Date();
+                    previousMonth.setMonth(previousMonth.getMonth() - 1);
+                    return previousMonth.toLocaleString('tr-TR', { month: 'long' }).toUpperCase();
+                  })()} AYI</div>
                   <div className='font-bold text-center text-md p-[7px] bg-[#F3F3F3] w-full autoFix'>NETWORK LİDERLERİ</div>
                   <div className='flex flex-col items-center'>
                     <div className='flex flex-col items-center'>
