@@ -63,7 +63,10 @@ const PagePrint3 = () => {
                   </div>
                 </div>
                 <div>
-                <table className="w-full border-collapse mt-4 autoFix">
+                  <div className='text-xs font-bold text-[#C80F2E] text-center'>
+                    {`BNI ${selectedGroupContext?.name.toUpperCase()} ÜYE YOKLAMA LİSTESİ`}
+                  </div>
+                  <table className="w-full border-collapse mt-3 autoFix">
                     <thead>
                       <tr>
                         <th className="border bg-black/20 border-black/70 text-[11px] text-center text-[#C80F2E] autoFix font-bold p-1">Sıra</th>

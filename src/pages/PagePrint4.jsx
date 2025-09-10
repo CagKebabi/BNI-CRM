@@ -111,10 +111,10 @@ const PagePrint4 = () => {
                   </div>
                 </div>
                 <div className='flex flex-col h-full'>
-                    <div>
-                      Ziyaretçi Yoklama Listesi
+                    <div className='text-xs font-bold text-[#C80F2E] text-center'>
+                      {`BNI ${selectedGroupContext?.name.toUpperCase()} ZİYARETÇİ YOKLAMA LİSTESİ`}
                     </div>
-                    <table className="w-full border-collapse mt-4 autoFix">
+                    <table className="w-full border-collapse mt-3 autoFix">
                     <thead>
                       <tr>
                         <th className="border bg-black/20 border-black/70 text-[11px] text-center text-[#C80F2E] autoFix font-bold p-1">Sıra</th>
