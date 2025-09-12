@@ -1298,6 +1298,18 @@ function GroupDetail() {
                 4
               </Button>
             </Link>
+            <Link to="/page-print-5">
+              <Button variant="outline" className="flex items-center gap-2">
+                <Printer className="h-4 w-4" />
+                5
+              </Button>
+            </Link>
+            <Link to="/page-print-6">
+              <Button variant="outline" className="flex items-center gap-2">
+                <Printer className="h-4 w-4" />
+                6
+              </Button>
+            </Link>
           </div>
         </div>
         <div className="flex w-full flex-col gap-6">

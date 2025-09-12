@@ -14,6 +14,8 @@ import PagePrint from "./pages/PagePrint";
 import PagePrint2 from "./pages/PagePrint2";
 import PagePrint3 from "./pages/PagePrint3";
 import PagePrint4 from "./pages/PagePrint4";
+import PagePrint5 from "./pages/PagePrint5";
+import PagePrint6 from "./pages/PagePrint6";
 import { UserProvider } from "./contexts/UserContext";
 import { GroupProvider } from "./contexts/GroupContext";
 
@@ -74,6 +76,14 @@ function App() {
             {
               path: "page-print-4",
               element: <PagePrint4 />,
+            },
+            {
+              path: "page-print-5",
+              element: <PagePrint5 />,
+            },
+            {
+              path: "page-print-6",
+              element: <PagePrint6 />,
             }
           ],
         }
