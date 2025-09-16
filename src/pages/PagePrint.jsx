@@ -5,6 +5,9 @@ import { eventsService } from '../services/events.service';
 import { groupsStaticDatasService } from '../services/groupsStaticDatas.service';
 import { presentationsService } from '../services/presentations.service';
 import { openCategoriesService } from '../services/openCategories.service';
+import { groupMeetingsService } from '../services/groupMeetings.service';
+import { Printer } from 'lucide-react';
+import { Button } from '../components/ui/button';
 import './PagePrint.css';
 import { useGroup } from '../contexts/GroupContext';
 
@@ -21,6 +24,7 @@ const PagePrint = () => {
   const [membershipCommitteeMembers, setMembershipCommitteeMembers] = useState([]);
   const [groupAmbassadors, setGroupAmbassadors] = useState([]); 
   const [consultingDirectors, setConsultingDirectors] = useState([]);
+  const [nearestMeeting, setNearestMeeting] = useState(null);
 
   useEffect(() => {
     fetchGoldMembers();
@@ -33,6 +37,7 @@ const PagePrint = () => {
     filterMembershipCommitteeMembers();
     filterGroupAmbassadors();
     filterConsultingDirectors();
+    findNearestMeeting();
     console.log("selectedGroupContext", selectedGroupContext);
     console.log("goldMembers", goldMembers);
     console.log("leaderMembers", leaderMembers);
@@ -44,6 +49,7 @@ const PagePrint = () => {
     console.log("membershipCommitteeMembers", membershipCommitteeMembers);
     console.log("groupAmbassadors", groupAmbassadors);
     console.log("consultingDirectors", consultingDirectors);
+    console.log("nearestMeeting", nearestMeeting);
   }, [selectedGroupContext]);
 
   const fetchGoldMembers = async () => {
@@ -84,7 +90,6 @@ const PagePrint = () => {
       setEvents([]);
     }
   }
-
 
   const fetchGroupsStaticDatas = async () => {
     if (!selectedGroupContext?.id) return;
@@ -187,7 +192,28 @@ const PagePrint = () => {
     setConsultingDirectors(consultingDirectors);
   }
 
-  // fetchGroupMeetings fonksiyonu kaldırıldı - artık fethVisitors içinde çağırılıyor
+  // Bugüne en yakın meeting'i bulan fonksiyon
+  const findNearestMeeting = async () => {
+    const meetings = await groupMeetingsService.getGroupMeetings(selectedGroupContext.id);
+    if (!meetings || meetings.length === 0) return null;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Saati sıfırla
+    
+    // Toplantıları tarihe göre sırala (bugüne en yakından başlayarak)
+    const sortedMeetings = meetings
+      .map(meeting => ({
+        ...meeting,
+        dateObj: new Date(meeting.date)
+      }))
+      .sort((a, b) => {
+        const diffA = Math.abs(a.dateObj - today);
+        const diffB = Math.abs(b.dateObj - today);
+        return diffA - diffB;
+      });
+    
+    setNearestMeeting(sortedMeetings.length > 0 ? sortedMeetings[0] : null);
+  };
 
   const handlePrint = () => {
     // PDF adını dinamik olarak ayarla
@@ -207,12 +233,15 @@ const PagePrint = () => {
     <>
       {/* Yazdırma butonu - sadece ekranda görünür */}
       <div className="print:hidden flex justify-center autoFix">
-        <button
+        <Button
           onClick={handlePrint}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors"
+          variant="default"
+          size="default"
+          className="gap-2"
         >
+          <Printer className="h-4 w-4" />
           Yazdır (A4)
-        </button>
+        </Button>
       </div>
 
       {/* A4 Sayfalar Konteyner */}
@@ -297,7 +326,13 @@ const PagePrint = () => {
                 </div>
                 <div className='w-[1px] h-auto bg-[#000000]'></div>
                 <div className='flex flex-col w-5/10'>
-                  <div className='text-center font-bold text-2xl text-[#C80F2E] p-[20px] autoFix'>21.08.2025</div>
+                  <div className='text-center font-bold text-2xl text-[#C80F2E] p-[20px] autoFix'>
+                    {nearestMeeting?.date ? new Date(nearestMeeting.date).toLocaleDateString('tr-TR', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric'
+                    }) : ''}
+                  </div>
                   <ul className='flex flex-col items-center gap-2'>
                     <li className='text-xl'>Serbest Networking</li>
                     <li className='text-xl'>BNI,Felsefesi ve Temel Değerlerimiz</li>
@@ -384,14 +419,23 @@ const PagePrint = () => {
             <div className='a4-content pb-[50px] autoFix'>
               {/* İkinci sayfa içeriği */}
               <div className='pl-[20px] pr-[20px] autoFix'>
-                <div className='text-[12px] gap-2 font-bold h-[63px] flex items-center autoFix'>
-                  <img className='w-[90px]' src={bniLogo} alt="" />
-                  <div>
-                    <div className='flex items-start flex-col flex-grow'>
-                      <div className='text-sm font-bold'>Türkiye/İstanbul</div>
-                       <div className='text-sm font-bold'>{`BNI ${selectedGroupContext?.name} Her ${selectedGroupContext?.meeting_day} - ${selectedGroupContext?.start_time} - ${selectedGroupContext?.end_time} Arası`}</div>
-                     </div>
-                   </div>
+                <div className='text-[12px] gap-2 font-bold h-[63px] flex items-center justify-between autoFix'>
+                  <div className='flex items-center gap-2'>
+                    <img className='w-[90px]' src={bniLogo} alt="" />
+                    <div>
+                      <div className='flex items-start flex-col flex-grow'>
+                        <div className='text-sm font-bold'>Türkiye/İstanbul</div>
+                        <div className='text-sm font-bold'>{`BNI ${selectedGroupContext?.name} Her ${selectedGroupContext?.meeting_day} - ${selectedGroupContext?.start_time} - ${selectedGroupContext?.end_time} Arası`}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className='text-sm font-bold'>
+                    {nearestMeeting?.date ? new Date(nearestMeeting.date).toLocaleDateString('tr-TR', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
+                    }) : ''}
+                  </div>
                 </div>
                 <div className='flex'>
                   <div className='w-4/10'>

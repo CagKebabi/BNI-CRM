@@ -138,12 +138,13 @@ const addVisitorFormSchema = z.object({
   status: z.string().min(2, {
     message: "Durum en az 2 karakter olmalıdır.",
   }),
+  future_date: z.string().optional(),
   note: z.string().min(2, {
     message: "Not en az 2 karakter olmalıdır.",
   }),
   attended: z.boolean().default(false),
   contacted: z.boolean().default(false),
-  contacted_by: z.string().optional(),
+  contacted_by: z.string().nullable().optional(),
   rating:z.coerce.number().optional(),
 });
 
@@ -269,6 +270,7 @@ function GroupDetail() {
       email: "",
       invited_by: "",
       status: "",
+      future_date: "",
       note: "",
       attended: false,
       contacted: false,
@@ -280,7 +282,7 @@ function GroupDetail() {
   const updateVisitorForm = useForm({
     resolver: zodResolver(addVisitorFormSchema),
     defaultValues: {
-      visit_date: "",
+      // visit_date: "",
       group: selectedGroupContext?.id || "",
       meeting: "",
       full_name: "",
@@ -290,6 +292,7 @@ function GroupDetail() {
       email: "",
       invited_by: "",
       status: "",
+      future_date: "",
       note: "",
       attended: false,
       contacted: false,
@@ -741,7 +744,7 @@ function GroupDetail() {
     // Grup değerini selectedGroupContext.id'den alıyoruz
     const visitData = {
       ...data,
-      contacted_by: data.contacted_by === "none" ? null : data.contacted_by,
+      contacted_by: data.contacted_by === "none" || data.contacted_by === "" ? null : data.contacted_by,
       group: selectedGroupContext?.id,
     };
 
@@ -782,7 +785,7 @@ function GroupDetail() {
     // Grup değerini selectedGroupContext.id'den alıyoruz
     const updateData = {
       ...data,
-      contacted_by: data.contacted_by === "none" ? null : data.contacted_by,
+      contacted_by: data.contacted_by === "none" || data.contacted_by === "" ? null : data.contacted_by,
       group: selectedGroupContext?.id,
     };
 
@@ -805,7 +808,7 @@ function GroupDetail() {
     setSelectedVisitor(visitor);
     if (dialogType === "update") {
       updateVisitorForm.reset({
-        visit_date: visitor.visit_date,
+        // visit_date: visitor.visit_date,
         group: visitor.group,
         meeting: visitor.meeting,
         full_name: visitor.full_name,
@@ -815,6 +818,7 @@ function GroupDetail() {
         email: visitor.email,
         invited_by: visitor.invited_by,
         status: visitor.status,
+        future_date: visitor.future_date || "",
         note: visitor.note,
         attended: visitor.attended,
         contacted: visitor.contacted,
@@ -1528,7 +1532,7 @@ function GroupDetail() {
                               <TableCell>
                                <div className="flex flex-col gap-1">
                                 <span
-                                    className={`text-center px-2 py-1 rounded-full text-xs ${
+                                    className={`text-center px-2 py-1 rounded-md text-xs flex flex-col ${
                                       visitor.status === "Olumlu"
                                         ? "bg-green-100 text-green-800"
                                         : visitor.status === "Olumsuz"
@@ -1537,9 +1541,10 @@ function GroupDetail() {
                                     }`}
                                   >
                                     {visitor.status}
+                                    {visitor.future_date && <span className="text-gray-500">{new Date(visitor.future_date).toLocaleDateString("tr-TR")}</span>}
                                   </span>
                                   <span
-                                    className={`text-center px-2 py-1 rounded-full text-xs ${
+                                    className={`text-center px-2 py-1 rounded-md text-xs ${
                                       visitor.attended
                                         ? "bg-green-100 text-green-800"
                                         : "bg-red-100 text-red-800"
@@ -2341,6 +2346,48 @@ function GroupDetail() {
                   </FormItem>
                 )}
               />
+              {addVisitorForm.watch("status") === "İleri Tarih" && (
+                <FormField
+                  control={addVisitorForm.control}
+                  name="future_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>İleri Tarih</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(new Date(field.value), "dd/MM/yyyy", { locale: tr })
+                              ) : (
+                                <span>Tarih seçiniz</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value ? new Date(field.value) : undefined}
+                            onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
+                            disabled={(date) => date < new Date()}
+                            initialFocus
+                            locale={tr}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
               <FormField
                 control={addVisitorForm.control}
                 name="note"
@@ -2476,7 +2523,7 @@ function GroupDetail() {
               onSubmit={updateVisitorForm.handleSubmit(handleUpdateVisitor)}
               className="space-y-6 max-h-[50vh] overflow-y-auto p-3"
             >
-              <FormField
+              {/* <FormField
                 control={updateVisitorForm.control}
                 name="visit_date"
                 render={({ field }) => (
@@ -2523,7 +2570,7 @@ function GroupDetail() {
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+              /> */}
               <FormField
                 control={updateVisitorForm.control}
                 name="group"
@@ -2706,6 +2753,48 @@ function GroupDetail() {
                   </FormItem>
                 )}
               />
+              {updateVisitorForm.watch("status") === "İleri Tarih" && (
+                <FormField
+                  control={updateVisitorForm.control}
+                  name="future_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>İleri Tarih</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(new Date(field.value), "dd/MM/yyyy", { locale: tr })
+                              ) : (
+                                <span>Tarih seçiniz</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value ? new Date(field.value) : undefined}
+                            onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
+                            disabled={(date) => date < new Date()}
+                            initialFocus
+                            locale={tr}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
               <FormField
                 control={updateVisitorForm.control}
                 name="note"

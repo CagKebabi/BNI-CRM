@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import bniLogo from '../assets/bni-logo_brandlogos.net_vdxgj.png';
 import { groupMembersService } from '../services/groupMembers.service';
+import { groupMeetingsService } from '../services/groupMeetings.service';
 import './PagePrint.css';
 import { useGroup } from '../contexts/GroupContext';
+import { Printer } from 'lucide-react';
+import { Button } from '../components/ui/button';
 
 const PagePrint3 = () => {  
   const { selectedGroupContext } = useGroup();
   const [groupMembers, setGroupMembers] = useState([]);
+  const [nearestMeeting, setNearestMeeting] = useState(null);
 
   useEffect(() => {
     fetchGroupMembers();
+    findNearestMeeting();
     console.log("selectedGroupContext", selectedGroupContext);
     console.log("groupMembers", groupMembers);
   }, []);
@@ -18,6 +23,29 @@ const PagePrint3 = () => {
     const groupMembers = await groupMembersService.getGroupMembers(selectedGroupContext?.id);
     setGroupMembers(groupMembers);
   }
+
+  // Bugüne en yakın meeting'i bulan fonksiyon
+  const findNearestMeeting = async () => {
+    const meetings = await groupMeetingsService.getGroupMeetings(selectedGroupContext.id);
+    if (!meetings || meetings.length === 0) return null;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Saati sıfırla
+    
+    // Toplantıları tarihe göre sırala (bugüne en yakından başlayarak)
+    const sortedMeetings = meetings
+      .map(meeting => ({
+        ...meeting,
+        dateObj: new Date(meeting.date)
+      }))
+      .sort((a, b) => {
+        const diffA = Math.abs(a.dateObj - today);
+        const diffB = Math.abs(b.dateObj - today);
+        return diffA - diffB;
+      });
+    
+    setNearestMeeting(sortedMeetings.length > 0 ? sortedMeetings[0] : null);
+  };
 
   const handlePrint = () => {
     // PDF adını dinamik olarak ayarla
@@ -37,12 +65,15 @@ const PagePrint3 = () => {
     <>
       {/* Yazdırma butonu - sadece ekranda görünür */}
       <div className="print:hidden flex justify-center autoFix">
-        <button
+        <Button
           onClick={handlePrint}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors"
+          variant="default"
+          size="default"
+          className="gap-2"
         >
+          <Printer className="h-4 w-4" />
           Yazdır (A4)
-        </button>
+        </Button>
       </div>
 
       {/* A4 Sayfalar Konteyner */}
@@ -53,13 +84,22 @@ const PagePrint3 = () => {
             <div className='a4-content pb-[50px] autoFix'>
               {/* İkinci sayfa içeriği */}
               <div className='pl-[20px] pr-[20px] autoFix'>
-                <div className='text-[12px] gap-2 font-bold h-[63px] flex items-center autoFix'>
-                  <img className='w-[90px]' src={bniLogo} alt="" />
-                  <div>
-                    <div className='flex items-start flex-col flex-grow'>
-                        <div className='text-sm font-bold'>Türkiye/İstanbul</div>
-                        <div className='text-sm font-bold'>{`BNI ${selectedGroupContext?.name} Her ${selectedGroupContext?.meeting_day} - ${selectedGroupContext?.start_time} - ${selectedGroupContext?.end_time} Arası`}</div>
+                <div className='text-[12px] gap-2 font-bold h-[63px] flex items-center justify-between autoFix'>
+                  <div className='flex items-center gap-2'>
+                    <img className='w-[90px]' src={bniLogo} alt="" />
+                    <div>
+                      <div className='flex items-start flex-col flex-grow'>
+                          <div className='text-sm font-bold'>Türkiye/İstanbul</div>
+                          <div className='text-sm font-bold'>{`BNI ${selectedGroupContext?.name} Her ${selectedGroupContext?.meeting_day} - ${selectedGroupContext?.start_time} - ${selectedGroupContext?.end_time} Arası`}</div>
+                      </div>
                     </div>
+                  </div>
+                  <div className='text-sm font-bold'>
+                    {nearestMeeting?.date ? new Date(nearestMeeting.date).toLocaleDateString('tr-TR', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
+                    }) : ''}
                   </div>
                 </div>
                 <div>
