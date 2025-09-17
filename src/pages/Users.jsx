@@ -442,7 +442,7 @@ const Users = () => {
     
     return (
         <>
-            <div className="max-w-6xl p-6">
+            <div className="max-w-6xl">
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold mb-6">Kullanıcılar</h1>
                     <Button variant="default" size="icon" onClick={() => setAddUserDialogOpen(true)}>

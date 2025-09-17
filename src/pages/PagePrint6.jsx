@@ -158,7 +158,7 @@ const PagePrint6 = () => {
   return (
     <>
       {/* Yazdırma, Düzenle ve Döndür butonları - sadece ekranda görünür */}
-      <div className="print:hidden flex justify-center gap-3 autoFix mb-6">
+      <div className="print:hidden flex justify-center flex-wrap gap-3 autoFix mb-6">
         <Button
           onClick={handlePrint}
           variant="default"
@@ -212,7 +212,7 @@ const PagePrint6 = () => {
       </div>
 
       {/* A4 Sayfalar Konteyner */}
-      <div className="flex flex-col gap-0">
+      <div className="flex flex-col gap-0 max-lg:w-max">
         {/* Birinci Sayfa */}
         <div className="flex justify-center">
           <div className={`a4-page ${isRotated ? '-rotate-90' : ''}`}>

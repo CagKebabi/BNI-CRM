@@ -215,7 +215,7 @@ const PagePrint5 = () => {
   return (
     <>
       {/* Yazdırma, Düzenle ve Döndür butonları - sadece ekranda görünür */}
-      <div className="print:hidden flex justify-center gap-3 autoFix mb-6">
+      <div className="print:hidden flex justify-center flex-wrap gap-3 autoFix mb-6">
         <Button
           onClick={handlePrint}
           variant="default"
@@ -360,7 +360,7 @@ const PagePrint5 = () => {
       </div>
 
       {/* A4 Sayfalar Konteyner */}
-      <div className="flex flex-col gap-0">
+      <div className="flex flex-col gap-0 max-lg:w-max">
         {pages.map((pageCards, pageIndex) => (
           <div key={pageIndex} className="flex justify-center">
             <div className={`a4-page ${isRotated ? '-rotate-90' : ''}`}>
@@ -368,7 +368,7 @@ const PagePrint5 = () => {
                 {/* Sayfa içeriği */}
                 <div className='pl-[20px] pr-[20px] autoFix h-full flex justify-center items-center'>
                   {/* 3x3 BNI Kartvizit Grid */}
-                  <div className="flex flex-wrap p-2 gap-0.5 rotate-90 autoFix min-w-[290mm] min-h-[200mm] autoFix">
+                  <div className="flex flex-wrap gap-0.5 rotate-90 autoFix min-w-[255mm] min-h-[160mm] autoFix">
                     {pageCards.map((card, cardIndex) => (
                       <div key={card.id} className="relative bg-white border-1 border-black overflow-hidden w-[33%] autoFix">
                         {/* Üst bölüm - Beyaz alan */}

@@ -278,7 +278,7 @@ const Regions = () => {
     
     return (
         <>
-            <div className="max-w-4xl p-6">
+            <div className="max-w-4xl">
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold mb-6">Bölgeler</h1>
                     <Button variant="default" size="icon" onClick={() => setAddRegionDialogOpen(true)}>

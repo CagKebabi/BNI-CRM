@@ -1243,7 +1243,7 @@ function GroupDetail() {
 
   return (
     <>
-      <div className="w-full max-w-6xl p-6">
+      <div className="w-full max-w-6xl">
         <div className="flex justify-between flex-wrap gap-2 items-center mb-6">
           <div>
             <div>

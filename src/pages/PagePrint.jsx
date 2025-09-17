@@ -245,7 +245,7 @@ const PagePrint = () => {
       </div>
 
       {/* A4 Sayfalar Konteyner */}
-      <div className="flex flex-col gap-0">
+      <div className="flex flex-col gap-0 max-lg:w-max">
         {/* Birinci Sayfa */}
         <div className="flex justify-center">
           <div className="a4-page">
