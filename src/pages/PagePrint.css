@@ -1,178 +1,173 @@
 /* A4 Yazdırma Stilleri */
-
 /* A4 boyutları: 210mm x 297mm */
 .a4-page {
-  width: 210mm;
-  min-height: 297mm;
-  /* margin: 10mm auto; */
-  background-color: white;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  position: relative;
-  overflow: hidden; /* Taşan içeriği kırp */
+	width: 210mm;
+	min-height: 297mm;
+	/* margin: 10mm auto; */
+	background-color: white;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+	position: relative;
+	overflow: hidden;
+	/* Taşan içeriği kırp */
 }
 
 .a4-content {
-  width: 100%;
-  height: 100%;
-  /* padding: 0; */
-  margin: 0;
+	width: 100%;
+	height: 100%;
+	/* padding: 0; */
+	margin: 0;
 }
 
 /* Sayfa arası boşluk kontrolü için */
 @media screen {
-  .a4-page {
-    margin-bottom: 2rem; /* Ekranda görüntülerken sayfalar arası boşluk */
-  }
+	.a4-page {
+		margin-bottom: 2rem;
+		/* Ekranda görüntülerken sayfalar arası boşluk */
+	}
 }
 
 /* Yazdırma Medya Sorgusu */
 @media print {
-  /* Yazdırma sırasında arka plan renklerini ve görselleri göster */
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-    color-adjust: exact !important;
-  }
-  
-  *:not(.autoFix) {
-    margin: 0 !important;
-    padding: 0 !important;
-    /* border kaldırıldı - sadece tablo için koruyacağız */
-  }
-  
-  @page {
-    size: 210mm 297mm;
-    margin: 0mm !important;
-  }
-  
-  html, body {
-    width: 210mm;
-    height: 297mm;
-    margin: 0 !important;
-    padding: 0 !important;
-    /* background: none; */
-    overflow: visible !important; /* overflow: hidden yerine visible kullanıyoruz */
-  }
-  
-  /* Sayfa konteynerı için yeni stil */
-  .flex.flex-col.gap-0 {
-    display: block !important;
-  }
 
-  .a4-page {
-    width: 210mm;
-    height: 297mm !important; /* Sabit yükseklik */
-    margin: 0 !important;
-    padding: 0 !important;
-    border: none !important;
-    box-shadow: none;
-    page-break-after: always !important;
-    page-break-before: auto !important;
-    page-break-inside: avoid !important;
-    position: relative;
-    overflow: hidden;
-  }
+	/* Yazdırma sırasında arka plan renklerini ve görselleri göster */
+	* {
+		-webkit-print-color-adjust: exact !important;
+		print-color-adjust: exact !important;
+		color-adjust: exact !important;
+	}
 
-  /* Son sayfada sayfa sonu olmaması için */
-  .a4-page:last-child {
-    page-break-after: avoid !important;
-  }
-  
-  /* Yazdırma sırasında içerik alanı için kenar boşlukları */
-  .a4-content {
-    padding: 0;
-    box-sizing: border-box;
-    height: 100%;
-    position: relative;
-  }
+	*:not(.autoFix) {
+		margin: 0 !important;
+		padding: 0 !important;
+		/* border kaldırıldı - sadece tablo için koruyacağız */
+	}
 
-  /* Tablo stilleri - yazdırma için özel */
-  table {
-    border-collapse: collapse !important;
-    width: 100% !important;
-    /* border: 1px solid #000 !important; */
-  }
+	@page {
+		size: 210mm 297mm;
+		margin: 0mm !important;
+	}
 
-  /* ul ve li elementleri için özel print stilleri */
-  /* ul {
-    margin: 0 !important;
-    padding: 0 !important;
-    list-style: none !important;
-  }
+	html,
+	body {
+		width: 210mm;
+		height: 297mm;
+		margin: 0 !important;
+		padding: 0 !important;
+		/* background: none; */
+		overflow: visible !important;
+		/* overflow: hidden yerine visible kullanıyoruz */
+	}
 
-  li {
-    margin: 0 !important;
-    padding: 4px !important;
-    list-style: none !important;
-  } */
+	/* Sayfa konteynerı için yeni stil */
+	.flex.flex-col.gap-0 {
+		display: block !important;
+	}
 
-  /* Line clamp için özel stil */
-  .line-clamp-1 {
-    display: -webkit-box !important;
-    -webkit-line-clamp: 1 !important;
-    -webkit-box-orient: vertical !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    line-height: 1.2 !important;
-  }
+	.a4-page {
+		width: 210mm;
+		height: 297mm !important;
+		/* Sabit yükseklik */
+		margin: 0 !important;
+		padding: 0 !important;
+		border: none !important;
+		box-shadow: none;
+		page-break-after: always !important;
+		page-break-before: auto !important;
+		page-break-inside: avoid !important;
+		position: relative;
+		overflow: hidden;
+	}
 
-  table th,
-  table td {
-    /* border: 1px solid #000 !important; */
-    /* padding: 8px !important; */
-    /* font-size: 12px !important; */
-    /* text-align: center !important; */
-  }
+	/* Son sayfada sayfa sonu olmaması için */
+	.a4-page:last-child {
+		page-break-after: avoid !important;
+	}
 
-  table th {
-    /* background-color: #f5f5f5 !important;
-    font-weight: bold !important; */
-  }
+	/* Yazdırma sırasında içerik alanı için kenar boşlukları */
+	.a4-content {
+		padding: 0;
+		box-sizing: border-box;
+		height: 100%;
+		position: relative;
+	}
 
-  table tbody tr:nth-child(even) {
-    /* background-color: #f9f9f9 !important; */
-  }
+	/* Tablo stilleri - yazdırma için özel */
+	table {
+		border-collapse: collapse !important;
+		width: 100% !important;
+		/* border: 1px solid #000 !important; */
+	}
 
-  /* Tablo başlıkları için özel stil */
-  .bg-gray-100 {
-    background-color: #f5f5f5 !important;
-  }
+	/* ul ve li elementleri için özel print stilleri */
+	/* ul { margin: 0 !important; padding: 0 !important; list-style: none !important; } li { margin: 0 !important; padding: 4px !important; list-style: none !important; } */
+	/* Line clamp için özel stil */
+	.line-clamp-1 {
+		display: -webkit-box !important;
+		-webkit-line-clamp: 1 !important;
+		-webkit-box-orient: vertical !important;
+		overflow: hidden !important;
+		text-overflow: ellipsis !important;
+		line-height: 1.2 !important;
+	}
 
-  .border-gray-300 {
-    border-color: #000 !important;
-  }
-  
-  /* Yazdırma sırasında gizlenecek elementler */
-  .print\:hidden,
-  header,
-  nav,
-  .sidebar,
-  .sidebar-trigger,
-  .dark-mode-toggle,
-  button[aria-label*="mode"],
-  button[aria-label*="sidebar"],
-  button[aria-label*="menu"],
-  .navbar,
-  .nav-container {
-    display: none !important;
-  }
-  
-  /* Ana içerik alanının tam genişlikte görüntülenmesi */
-  main, .main-content, .content-area {
-    margin: 0 !important;
-    padding: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-  
-  /* Yazdırma sırasında sayfa kesme ayarları */
-  .page-break {
-    page-break-before: always !important;
-  }
-  
-  /* Yazdırma sırasında sayfa içinde kesme olmaması gereken elementler */
-  .no-break {
-    page-break-inside: avoid !important;
-  }
+	table th,
+	table td {
+		/* border: 1px solid #000 !important; */
+		/* padding: 8px !important; */
+		/* font-size: 12px !important; */
+		/* text-align: center !important; */
+	}
+
+	table th {
+		/* background-color: #f5f5f5 !important; font-weight: bold !important; */
+	}
+
+	table tbody tr:nth-child(even) {
+		/* background-color: #f9f9f9 !important; */
+	}
+
+	/* Tablo başlıkları için özel stil */
+	.bg-gray-100 {
+		background-color: #f5f5f5 !important;
+	}
+
+	.border-gray-300 {
+		border-color: #000 !important;
+	}
+
+	/* Yazdırma sırasında gizlenecek elementler */
+	.print\:hidden,
+	header,
+	nav,
+	.sidebar,
+	.sidebar-trigger,
+	.dark-mode-toggle,
+	button[aria-label*="mode"],
+	button[aria-label*="sidebar"],
+	button[aria-label*="menu"],
+	.navbar,
+	.nav-container {
+		display: none !important;
+	}
+
+	/* Ana içerik alanının tam genişlikte görüntülenmesi */
+	main,
+	.main-content,
+	.content-area {
+		margin: 0 !important;
+		padding: 0 !important;
+		left: 0 !important;
+		width: 100% !important;
+		max-width: 100% !important;
+	}
+
+	/* Yazdırma sırasında sayfa kesme ayarları */
+	.page-break {
+		page-break-before: always !important;
+	}
+
+	/* Yazdırma sırasında sayfa içinde kesme olmaması gereken elementler */
+	.no-break {
+		page-break-inside: avoid !important;
+	}
 }

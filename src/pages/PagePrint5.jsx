@@ -5,18 +5,20 @@ import uyeKartAlt from '../assets/uye_kart_alt.jpg';
 import { Button } from '../components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Checkbox } from '../components/ui/checkbox';
-import { Printer, Edit, RotateCcw, Save, Users, Plus } from 'lucide-react';
+import { Printer, Edit, RotateCcw, Save, Users, Plus, ZoomIn, ZoomOut } from 'lucide-react';
 import './PagePrint.css';
 import { useGroup } from '../contexts/GroupContext';
 
 const PagePrint5 = () => {  
   const { selectedGroupContext } = useGroup();
   const [groupMembers, setGroupMembers] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isRotated, setIsRotated] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [addedMembers, setAddedMembers] = useState([]); // Eklenen üyeleri takip et
+  const [zoomLevel, setZoomLevel] = useState(1); // Zoom seviyesi (1 = normal, 0.8 = küçük, 1.2 = büyük)
   const [pages, setPages] = useState([
     Array.from({ length: 9 }, (_, index) => ({
       id: index,
@@ -91,6 +93,18 @@ const PagePrint5 = () => {
     setIsEditing(false);
     // Burada verileri backend'e kaydetme işlemi yapılabilir
     console.log('Kart verileri kaydedildi:', pages);
+  }
+
+  const handleZoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 0.01, 2)); // Maksimum 2x zoom
+  }
+
+  const handleZoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 0.01, 0.5)); // Minimum 0.5x zoom
+  }
+
+  const resetZoom = () => {
+    setZoomLevel(1);
   }
 
   const handleMemberSelection = (memberId, isSelected) => {
@@ -235,6 +249,36 @@ const PagePrint5 = () => {
           {isRotated ? 'Döndürmeyi Kaldır' : 'Döndür'}
         </Button>
         
+        {/* Zoom Butonları */}
+        <div className="flex gap-1">
+          <Button
+            onClick={handleZoomOut}
+            variant="outline"
+            size="sm"
+            className="gap-1"
+            disabled={zoomLevel <= 0.5}
+          >
+            <ZoomOut className="h-4 w-4" />
+          </Button>
+          <Button
+            onClick={resetZoom}
+            variant="outline"
+            size="sm"
+            className="min-w-[60px]"
+          >
+            {Math.round(zoomLevel * 100)}%
+          </Button>
+          <Button
+            onClick={handleZoomIn}
+            variant="outline"
+            size="sm"
+            className="gap-1"
+            disabled={zoomLevel >= 2}
+          >
+            <ZoomIn className="h-4 w-4" />
+          </Button>
+        </div>
+        
         {/* Grup Üyeleri Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
@@ -305,14 +349,14 @@ const PagePrint5 = () => {
                 >
                   İptal
                 </Button>
-                <Button
+                {/* <Button
                   onClick={handleAddAllMembers}
                   variant="secondary"
                   disabled={groupMembers.length === 0}
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Tüm Üyeleri Ekle
-                </Button>
+                </Button> */}
                 <Button
                   onClick={handleAddSelectedMembers}
                   disabled={selectedMembers.length === 0}
@@ -364,11 +408,22 @@ const PagePrint5 = () => {
         {pages.map((pageCards, pageIndex) => (
           <div key={pageIndex} className="flex justify-center">
             <div className={`a4-page ${isRotated ? '-rotate-90' : ''}`}>
+              <div className='absolute top-0 left-0 w-full h-full'>
+                <div className='relative w-full h-full'>
+                  <div className='absolute top-[50%] left-0 translate-y-[-50%] w-[25mm] h-1 bg-black'></div>
+                  <div className='absolute top-[50%] right-0 translate-y-[-50%] w-[25mm] h-1 bg-black'></div>
+                  <div className='absolute top-[0] left-[50%] translate-x-[-50%] h-[25mm] w-1 bg-black'></div>
+                  <div className='absolute bottom-[0] left-[50%] translate-x-[-50%] h-[25mm] w-1 bg-black'></div>
+                </div>
+              </div>
               <div className='a4-content autoFix'>
                 {/* Sayfa içeriği */}
                 <div className='pl-[20px] pr-[20px] autoFix h-full flex justify-center items-center'>
                   {/* 3x3 BNI Kartvizit Grid */}
-                  <div className="flex flex-wrap gap-0.5 rotate-90 autoFix min-w-[255mm] min-h-[160mm] autoFix">
+                  <div 
+                    className="flex flex-wrap gap-0.5 rotate-90 autoFix min-w-[255mm] min-h-[160mm] autoFix"
+                    style={{ transform: ` scale(${zoomLevel})` }}
+                  >
                     {pageCards.map((card, cardIndex) => (
                       <div key={card.id} className="relative bg-white border-1 border-black overflow-hidden w-[33%] autoFix">
                         {/* Üst bölüm - Beyaz alan */}
